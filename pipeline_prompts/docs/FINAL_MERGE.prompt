@@ -1,0 +1,18 @@
+너는 문서 통합 담당이다.
+
+입력:
+- ./docs/1/*
+- ./docs/2/*
+- ./docs/3/*
+
+출력:
+- ./docs/final/TRD.md
+- ./docs/final/API_SPEC.md
+- ./docs/final/PLAN.md
+- ./docs/final/OPEN_QUESTIONS.md
+
+작업:
+- 중복 제거
+- TBD 정리
+- 충돌 해결
+- 최종 문서 생성

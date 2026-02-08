@@ -1,0 +1,103 @@
+lottogogo/
+├── pyproject.toml                    # uv 패키지 정의 (의존성, 메타데이터)
+├── README.md                         # 프로젝트 설명, 설치/사용법
+├── LICENSE                           # 라이선스 파일
+│
+├── config/
+│   ├── default.yaml                  # 기본 설정 파일
+│   └── example.yaml                  # 사용자 설정 예시
+│
+├── data/
+│   ├── history.csv                   # 과거 로또 데이터 (샘플)
+│   └── .gitkeep
+│
+├── src/
+│   └── lottogogo/
+│       ├── __init__.py               # 패키지 초기화, 버전 정보
+│       ├── main.py                   # CLI 엔트리포인트
+│       ├── py.typed                  # PEP 561 타입 힌트 마커
+│       │
+│       ├── config/
+│       │   ├── __init__.py
+│       │   ├── loader.py             # YAML/JSON 설정 로딩
+│       │   ├── schema.py             # Pydantic 설정 스키마
+│       │   └── defaults.py           # 기본값 정의
+│       │
+│       ├── data/
+│       │   ├── __init__.py
+│       │   ├── loader.py             # CSV 데이터 로딩/검증
+│       │   ├── validator.py          # 데이터 유효성 검사
+│       │   └── feature_extractor.py  # 통계 Feature 계산
+│       │
+│       ├── engine/
+│       │   ├── __init__.py
+│       │   ├── processor.py          # 파이프라인 조율/실행
+│       │   │
+│       │   ├── score/
+│       │   │   ├── __init__.py
+│       │   │   ├── calculator.py     # 베이지안 점수 계산
+│       │   │   ├── booster.py        # 휴리스틱 Boost 계산
+│       │   │   ├── penalizer.py      # Penalty 계산 (Poisson/Markov)
+│       │   │   └── normalizer.py     # Softmax 정규화
+│       │   │
+│       │   ├── sampler/
+│       │   │   ├── __init__.py
+│       │   │   ├── monte_carlo.py    # 몬테카를로 샘플링
+│       │   │   └── probability.py    # 확률 변환/샘플링 유틸
+│       │   │
+│       │   ├── filters/
+│       │   │   ├── __init__.py
+│       │   │   ├── base.py           # 필터 베이스 클래스/인터페이스
+│       │   │   ├── sum_filter.py     # 합계 필터 (100~175)
+│       │   │   ├── ac_filter.py      # AC값 필터 (≥7)
+│       │   │   ├── zone_filter.py    # 구간분산 필터 (구간당 ≤3)
+│       │   │   ├── tail_filter.py    # 끝수 필터 (동일 끝수 ≤2)
+│       │   │   ├── odd_even_filter.py # 홀짝 필터 (2:4~4:2)
+│       │   │   ├── high_low_filter.py # 고저 필터 (균형)
+│       │   │   ├── history_filter.py # 과거당첨 필터 (5개 이상 일치 시 폐기)
+│       │   │   └── pipeline.py       # 필터 파이프라인 관리
+│       │   │
+│       │   ├── ranker/
+│       │   │   ├── __init__.py
+│       │   │   ├── scorer.py         # 조합 점수 계산
+│       │   │   └── diversity.py      # 다양성 제약 적용
+│       │   │
+│       │   └── backtester/
+│       │       ├── __init__.py
+│       │       ├── walk_forward.py   # Walk-forward 테스트
+│       │       ├── metrics.py        # 성능 지표 계산
+│       │       └── baseline.py       # 랜덤 기준선 생성
+│       │
+│       └── types/
+│           ├── __init__.py
+│           ├── models.py             # 데이터 모델 (LottoRound, Combination 등)
+│           ├── enums.py              # 열거형 (FilterResult 등)
+│           └── constants.py          # 상수 (번호 범위, 필터 임계값 등)
+│
+├── tests/
+│   ├── __init__.py
+│   ├── conftest.py                   # pytest 공통 fixtures
+│   │
+│   ├── unit/
+│   │   ├── __init__.py
+│   │   ├── test_loader.py            # 데이터 로더 테스트
+│   │   ├── test_calculator.py        # 점수 계산 테스트
+│   │   ├── test_booster.py           # Boost 테스트
+│   │   ├── test_penalizer.py         # Penalty 테스트
+│   │   ├── test_sampler.py           # 샘플러 테스트
+│   │   ├── test_filters.py           # 개별 필터 테스트
+│   │   └── test_ranker.py            # 랭커 테스트
+│   │
+│   ├── integration/
+│   │   ├── __init__.py
+│   │   ├── test_pipeline.py          # 전체 파이프라인 테스트
+│   │   ├── test_reproducibility.py   # 재현성 테스트
+│   │   └── test_backtester.py        # 백테스터 통합 테스트
+│   │
+│   └── fixtures/
+│       ├── sample_history.csv        # 테스트용 샘플 데이터
+│       └── test_config.yaml          # 테스트용 설정
+│
+└── scripts/
+    ├── generate_sample.py            # 샘플 데이터 생성 스크립트
+    └── benchmark.py                  # 성능 벤치마크 스크립트

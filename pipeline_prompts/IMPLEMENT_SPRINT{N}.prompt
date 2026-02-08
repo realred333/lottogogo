@@ -1,0 +1,23 @@
+너는 구현 담당 에이전트다.
+
+입력:
+- ./docs/final/BACKLOG.md
+- ./docs/final/TRD.md
+- ./docs/final/API_SPEC.md
+
+이번 목표:
+- BACKLOG에서 Sprint {N}에 해당하는 Task만 구현하라.
+- Sprint {N+1} 이후 항목은 절대 건드리지 말 것.
+
+규칙:
+- 작은 단위로 작업 (Task 하나 → 테스트 → 다음 Task)
+- 기존 코드 READ-ONLY 영역 존중
+- 변경 후 반드시 테스트 실행
+- 실패 시 에러 로그를 근거로 수정
+- 각 Task 완료 시 요약 제공
+
+완료 조건:
+- Sprint {N}의 모든 Task Done
+- pytest(또는 대응 테스트) 통과
+
+시작하라.
