@@ -9,16 +9,17 @@ CSV 기반 로또 당첨 이력을 바탕으로 번호별 확률 점수를 만�
 2. [현재 저장소 스냅샷](#현재-저장소-스냅샷)
 3. [기술 스택](#기술-스택)
 4. [빠른 시작](#빠른-시작)
-5. [실행 방법](#실행-방법)
-6. [아키텍처와 데이터 흐름](#아키텍처와-데이터-흐름)
-7. [모듈별 상세](#모듈별-상세)
-8. [데이터 자산](#데이터-자산)
-9. [테스트](#테스트)
-10. [문서/프롬프트 자산](#문서프롬프트-자산)
-11. [전체 파일 인벤토리](#전체-파일-인벤토리)
-12. [트러블슈팅](#트러블슈팅)
-13. [운영/배포 메모](#운영배포-메모)
-14. [면책](#면책)
+5. [웹 MVP 실행 (FastAPI)](#웹-mvp-실행-fastapi)
+6. [실행 방법](#실행-방법)
+7. [아키텍처와 데이터 흐름](#아키텍처와-데이터-흐름)
+8. [모듈별 상세](#모듈별-상세)
+9. [데이터 자산](#데이터-자산)
+10. [테스트](#테스트)
+11. [문서/프롬프트 자산](#문서프롬프트-자산)
+12. [전체 파일 인벤토리](#전체-파일-인벤토리)
+13. [트러블슈팅](#트러블슈팅)
+14. [운영/배포 메모](#운영배포-메모)
+15. [면책](#면책)
 
 ## 프로젝트 목적
 
@@ -91,6 +92,40 @@ pytest -q
 ```bash
 .venv/bin/python recommend.py --csv history.csv --games 5 --seed 42
 ```
+
+## 웹 MVP 실행 (FastAPI)
+
+MVP 계획서(`MVP_PLAN.md`) 기준으로 아래 3가지를 한 번에 제공합니다.
+
+- `POST /api/recommend` (preset A/B, games 5/10, optional seed)
+- 단일 프론트 페이지 `/` (입력/결과/다시추천)
+- 후원 CTA 버튼 (`DONATE_URL` 환경변수)
+
+### 실행
+
+```bash
+DONATE_URL='https://example.com/lottogogo-donate' \
+uv run uvicorn lottogogo.mvp.api:app --app-dir src --host 0.0.0.0 --port 8000 --reload
+```
+
+브라우저에서 `http://127.0.0.1:8000` 접속.
+
+### 환경변수
+
+- `DONATE_URL`: 후원 버튼 이동 링크
+- `BACKEND_URL`: 프론트에서 호출할 API 베이스 URL (비우면 same-origin `/api/recommend` 사용)
+- `LOTTO_HISTORY_CSV`: 기본 `history.csv` 대신 사용할 CSV 경로
+- `CORS_ALLOW_ORIGINS`: 허용 origin 목록(쉼표 구분). 기본값 `*`
+
+### API 호출 예시
+
+```bash
+curl -X POST 'http://127.0.0.1:8000/api/recommend' \
+  -H 'content-type: application/json' \
+  -d '{"preset":"A","games":5,"seed":42}'
+```
+
+`LOTTO_HISTORY_CSV`를 지정하면 기본 `history.csv` 대신 다른 파일로 실행할 수 있습니다.
 
 ## 실행 방법
 
