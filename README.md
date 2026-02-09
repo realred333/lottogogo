@@ -130,6 +130,33 @@ uvicorn lottogogo.mvp.api:app --app-dir src --host 0.0.0.0 --port $PORT
 - 필수 환경변수:
   - `DONATE_URL`
 
+## Vercel + Render 분리 배포 (권장)
+
+- 목적:
+  - 프론트는 Vercel 정적 배포로 즉시 로드
+  - 백엔드는 Render 유지
+
+- 이 저장소에서 사용하는 파일:
+  - `index.html` : Vercel이 바로 서빙할 정적 프론트
+  - `api/recommend.js` : Vercel 서버리스 프록시 (`/api/recommend` -> Render)
+  - `api/robots.js`, `api/sitemap.js` : 도메인 기준 robots/sitemap 동적 생성
+  - `vercel.json` : `/robots.txt`, `/sitemap.xml` 라우팅
+  - `scripts/export_vercel_index.sh` : 템플릿(`src/lottogogo/mvp/static/index.html`)을 Vercel용 `index.html`로 변환
+
+- 프론트 템플릿 변경 후 동기화:
+
+```bash
+./scripts/export_vercel_index.sh
+```
+
+- Vercel 프로젝트 환경변수:
+  - `RENDER_BACKEND_URL=https://<your-render-service>.onrender.com`
+
+- 동작 방식:
+  - 브라우저는 Vercel 도메인의 `/api/recommend`를 호출
+  - Vercel 함수가 Render API로 프록시 호출
+  - Render가 슬립 상태면 첫 요청이 느릴 수 있고, UI에 안내 패널이 자동 표시됨
+
 ## SEO 점검 포인트
 
 - `GET /robots.txt` 노출
