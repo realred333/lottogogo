@@ -67,6 +67,13 @@ uv run uvicorn lottogogo.mvp.api:app --app-dir src --host 0.0.0.0 --port 8000 --
 
 - `DONATE_URL` : 후원 버튼 링크
 - `BACKEND_URL` : 프론트에서 호출할 API 베이스 URL (비우면 same-origin)
+- `PUBLIC_BASE_URL` : canonical/robots/sitemap 생성에 사용할 공개 URL
+- `SEO_TITLE` : 페이지 `<title>` 커스텀
+- `SEO_DESCRIPTION` : 페이지 meta description 커스텀
+- `OG_IMAGE_URL` : Open Graph 이미지 URL
+- `TWITTER_IMAGE_URL` : Twitter 이미지 URL (비우면 `OG_IMAGE_URL` 사용)
+- `GOOGLE_SITE_VERIFICATION` : Google Search Console 인증값
+- `NAVER_SITE_VERIFICATION` : 네이버 서치어드바이저 인증값
 - `LOTTO_HISTORY_CSV` : 기본 `history.csv` 대신 사용할 CSV 경로
 - `CORS_ALLOW_ORIGINS` : CORS 허용 origin 목록(쉼표 구분, 기본 `*`)
 
@@ -122,6 +129,15 @@ uvicorn lottogogo.mvp.api:app --app-dir src --host 0.0.0.0 --port $PORT
 
 - 필수 환경변수:
   - `DONATE_URL`
+
+## SEO 점검 포인트
+
+- `GET /robots.txt` 노출
+- `GET /sitemap.xml` 노출
+- 메타 태그/OG/JSON-LD(구조화 데이터) 기본 포함
+- Search Console 등록 시:
+  - Google: `GOOGLE_SITE_VERIFICATION` 설정
+  - Naver: `NAVER_SITE_VERIFICATION` 설정
 
 ## 공개 운영 가이드
 

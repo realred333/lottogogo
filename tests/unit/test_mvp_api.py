@@ -37,6 +37,22 @@ def test_home_page_includes_donate_and_backend_url(monkeypatch) -> None:
     assert "http://127.0.0.1:9000" in response.text
 
 
+def test_home_page_includes_seo_meta(monkeypatch) -> None:
+    monkeypatch.setenv("PUBLIC_BASE_URL", "https://lottogogo.example")
+    monkeypatch.setenv("GOOGLE_SITE_VERIFICATION", "google-token")
+    monkeypatch.setenv("NAVER_SITE_VERIFICATION", "naver-token")
+    client = TestClient(api.app)
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert '<link rel="canonical" href="https://lottogogo.example/" />' in response.text
+    assert '<meta name="google-site-verification" content="google-token" />' in response.text
+    assert '<meta name="naver-site-verification" content="naver-token" />' in response.text
+    assert "__SEO_" not in response.text
+    assert "application/ld+json" in response.text
+
+
 def test_recommend_endpoint_returns_expected_shape(monkeypatch) -> None:
     monkeypatch.setattr(api, "get_service", lambda: StubService())
     client = TestClient(api.app)
@@ -71,3 +87,24 @@ def test_cors_preflight_allows_local_dev_origin() -> None:
 
     assert response.status_code == 200
     assert response.headers["access-control-allow-origin"] == "*"
+
+
+def test_robots_txt_exposes_sitemap_url() -> None:
+    client = TestClient(api.app)
+
+    response = client.get("/robots.txt")
+
+    assert response.status_code == 200
+    assert "User-agent: *" in response.text
+    assert "Allow: /" in response.text
+    assert "Sitemap: http://testserver/sitemap.xml" in response.text
+
+
+def test_sitemap_xml_lists_home_url() -> None:
+    client = TestClient(api.app)
+
+    response = client.get("/sitemap.xml")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/xml")
+    assert "<loc>http://testserver/</loc>" in response.text

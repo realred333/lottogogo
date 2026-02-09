@@ -2,21 +2,28 @@
 
 from __future__ import annotations
 
+import json
 import html
 import os
+from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, Response
 from pydantic import BaseModel, Field, field_validator
 
 from .service import RecommendationService
 
 APP_ROOT = Path(__file__).resolve().parent
 INDEX_HTML_PATH = APP_ROOT / "static" / "index.html"
+DEFAULT_SEO_TITLE = "LottoGoGo | 로또 확률 실험 기반 선택 보조 도구"
+DEFAULT_SEO_DESCRIPTION = (
+    "로또 번호 선택을 위한 확률 실험 기반 보조 도구입니다. "
+    "당첨을 보장하지 않으며 통계 필터로 무근거 선택을 줄입니다."
+)
 
 
 class RecommendRequest(BaseModel):
@@ -100,17 +107,152 @@ def get_backend_url() -> str:
     return os.getenv("BACKEND_URL", "")
 
 
+def get_public_base_url(request: Request) -> str:
+    """Resolve canonical base URL from env or incoming request."""
+
+    configured = os.getenv("PUBLIC_BASE_URL", "").strip()
+    if configured:
+        return configured.rstrip("/")
+    return f"{request.url.scheme}://{request.url.netloc}"
+
+
+def get_seo_title() -> str:
+    """Resolve SEO page title."""
+
+    return os.getenv("SEO_TITLE", DEFAULT_SEO_TITLE).strip() or DEFAULT_SEO_TITLE
+
+
+def get_seo_description() -> str:
+    """Resolve SEO page description."""
+
+    return os.getenv("SEO_DESCRIPTION", DEFAULT_SEO_DESCRIPTION).strip() or DEFAULT_SEO_DESCRIPTION
+
+
+def get_optional_env(name: str) -> str:
+    """Read optional env var as stripped string."""
+
+    return os.getenv(name, "").strip()
+
+
+def build_optional_meta_tag(attr: str, key: str, value: str) -> str:
+    """Build optional single-line meta tag."""
+
+    if not value:
+        return ""
+    escaped = html.escape(value, quote=True)
+    return f'<meta {attr}="{key}" content="{escaped}" />'
+
+
+def build_structured_data(base_url: str) -> str:
+    """Build JSON-LD schema for Google/Naver crawlers."""
+
+    description = get_seo_description()
+    data = {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "WebSite",
+                "name": "LottoGoGo",
+                "url": f"{base_url}/",
+                "inLanguage": "ko-KR",
+                "description": description,
+            },
+            {
+                "@type": "SoftwareApplication",
+                "name": "LottoGoGo",
+                "applicationCategory": "UtilitiesApplication",
+                "operatingSystem": "Web",
+                "url": f"{base_url}/",
+                "description": description,
+                "inLanguage": "ko-KR",
+                "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "KRW",
+                },
+            },
+        ],
+    }
+    return json.dumps(data, ensure_ascii=False, separators=(",", ":"))
+
+
 @app.get("/", response_class=HTMLResponse)
-def home() -> HTMLResponse:
+def home(request: Request) -> HTMLResponse:
     """Serve single-page MVP UI."""
 
     if not INDEX_HTML_PATH.exists():
         raise HTTPException(status_code=500, detail="index.html 파일을 찾을 수 없습니다.")
 
     html_text = INDEX_HTML_PATH.read_text(encoding="utf-8")
-    html_text = html_text.replace("__DONATE_URL__", html.escape(get_donate_url(), quote=True))
-    html_text = html_text.replace("__BACKEND_URL__", html.escape(get_backend_url(), quote=True))
+    base_url = get_public_base_url(request)
+    seo_title = get_seo_title()
+    seo_description = get_seo_description()
+    canonical_url = f"{base_url}/"
+    sitemap_url = f"{base_url}/sitemap.xml"
+
+    og_image = get_optional_env("OG_IMAGE_URL")
+    twitter_image = get_optional_env("TWITTER_IMAGE_URL") or og_image
+    google_verification = get_optional_env("GOOGLE_SITE_VERIFICATION")
+    naver_verification = get_optional_env("NAVER_SITE_VERIFICATION")
+
+    replacements = {
+        "__DONATE_URL__": html.escape(get_donate_url(), quote=True),
+        "__BACKEND_URL__": html.escape(get_backend_url(), quote=True),
+        "__SEO_TITLE__": html.escape(seo_title, quote=True),
+        "__SEO_DESCRIPTION__": html.escape(seo_description, quote=True),
+        "__SEO_CANONICAL_URL__": html.escape(canonical_url, quote=True),
+        "__SEO_SITEMAP_URL__": html.escape(sitemap_url, quote=True),
+        "__SEO_OG_IMAGE_META__": build_optional_meta_tag("property", "og:image", og_image),
+        "__SEO_TWITTER_IMAGE_META__": build_optional_meta_tag("name", "twitter:image", twitter_image),
+        "__SEO_GOOGLE_SITE_VERIFICATION_META__": build_optional_meta_tag(
+            "name", "google-site-verification", google_verification
+        ),
+        "__SEO_NAVER_SITE_VERIFICATION_META__": build_optional_meta_tag(
+            "name", "naver-site-verification", naver_verification
+        ),
+        "__SEO_STRUCTURED_DATA_JSON__": build_structured_data(base_url),
+    }
+    for token, value in replacements.items():
+        html_text = html_text.replace(token, value)
+
     return HTMLResponse(content=html_text)
+
+
+@app.get("/robots.txt", response_class=PlainTextResponse, include_in_schema=False)
+def robots_txt(request: Request) -> PlainTextResponse:
+    """Expose robots.txt for Googlebot/Naver Yeti crawlers."""
+
+    base_url = get_public_base_url(request)
+    sitemap_url = f"{base_url}/sitemap.xml"
+    content = "\n".join(
+        [
+            "User-agent: *",
+            "Allow: /",
+            f"Sitemap: {sitemap_url}",
+        ]
+    )
+    return PlainTextResponse(f"{content}\n")
+
+
+@app.get("/sitemap.xml", response_class=Response, include_in_schema=False)
+def sitemap_xml(request: Request) -> Response:
+    """Expose XML sitemap for crawler discovery."""
+
+    base_url = get_public_base_url(request)
+    page_url = html.escape(f"{base_url}/", quote=True)
+    today = datetime.now(timezone.utc).date().isoformat()
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        "  <url>\n"
+        f"    <loc>{page_url}</loc>\n"
+        f"    <lastmod>{today}</lastmod>\n"
+        "    <changefreq>weekly</changefreq>\n"
+        "    <priority>1.0</priority>\n"
+        "  </url>\n"
+        "</urlset>\n"
+    )
+    return Response(content=xml, media_type="application/xml")
 
 
 @app.post("/api/recommend", response_model=RecommendResponse)
