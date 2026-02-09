@@ -47,6 +47,10 @@ Thumbs.db
 
 # Docs
 docs/
+pipeline_prompts/
+*.md
+!/README.md
+web_temp/
 
 # uv
 # uv.lock - keep this for reproducibility
