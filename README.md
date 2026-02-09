@@ -104,7 +104,7 @@ MVP 계획서(`MVP_PLAN.md`) 기준으로 아래 3가지를 한 번에 제공합
 ### 실행
 
 ```bash
-DONATE_URL='https://example.com/lottogogo-donate' \
+DONATE_URL='https://buymeacoffee.com/lottogogo' \
 uv run uvicorn lottogogo.mvp.api:app --app-dir src --host 0.0.0.0 --port 8000 --reload
 ```
 

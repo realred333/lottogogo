@@ -91,7 +91,7 @@ def get_service() -> RecommendationService:
 def get_donate_url() -> str:
     """Resolve donate URL for CTA button."""
 
-    return os.getenv("DONATE_URL", "https://example.com/lottogogo-donate")
+    return os.getenv("DONATE_URL", "https://buymeacoffee.com/lottogogo")
 
 
 def get_backend_url() -> str:
