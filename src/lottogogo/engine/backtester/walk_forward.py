@@ -45,7 +45,7 @@ class WalkForwardBacktester:
         if missing:
             raise ValueError(f"Missing required history columns: {missing}")
 
-        ordered = history.sort_values("round").reset_index(drop=True).copy()
+        ordered = history.reset_index(drop=True).sort_values("round").reset_index(drop=True).copy()
         results: list[RoundBacktestResult] = []
 
         for idx, row in ordered.iterrows():
@@ -80,4 +80,3 @@ class WalkForwardBacktester:
             )
 
         return results
-

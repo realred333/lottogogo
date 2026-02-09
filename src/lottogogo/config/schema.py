@@ -24,8 +24,8 @@ class EngineConfig(BaseModel):
     reverse_weight: float = Field(default=0.1, ge=0.0)
 
     poisson_window: int = Field(default=20, ge=1)
-    poisson_lambda: float = Field(default=0.5, ge=0.0)
-    markov_lambda: float = Field(default=0.3, ge=0.0)
+    poisson_lambda: float = Field(default=0.5, ge=0.0, le=0.5)
+    markov_lambda: float = Field(default=0.3, ge=0.0, le=0.5)
 
     sample_size: int = Field(default=50000, gt=0)
     min_prob_floor: float = Field(default=0.001, ge=0.0, lt=1.0)
@@ -33,4 +33,3 @@ class EngineConfig(BaseModel):
 
     max_overlap: int = Field(default=3, ge=0, le=6)
     seed: int = Field(default=42)
-

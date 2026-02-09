@@ -39,7 +39,7 @@ def test_poisson_penalty_scales_with_lambda():
         }
     )
     low = PenaltyCalculator(poisson_window=2, poisson_lambda=0.1).calculate_poisson_penalty(history)
-    high = PenaltyCalculator(poisson_window=2, poisson_lambda=0.6).calculate_poisson_penalty(history)
+    high = PenaltyCalculator(poisson_window=2, poisson_lambda=0.5).calculate_poisson_penalty(history)
 
     assert high[1] > low[1]
 
@@ -66,3 +66,10 @@ def test_markov_penalty_uses_transition_matrix():
     assert matrix[10, 10] > 0.0
     assert penalties[10] > penalties[1]
     assert penalties[10] >= 0.0
+
+
+def test_penalty_lambdas_reject_values_above_half():
+    with pytest.raises(ValueError):
+        PenaltyCalculator(poisson_lambda=0.6, markov_lambda=0.3)
+    with pytest.raises(ValueError):
+        PenaltyCalculator(poisson_lambda=0.3, markov_lambda=0.6)

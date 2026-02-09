@@ -25,6 +25,8 @@ class PenaltyCalculator:
             raise ValueError("poisson_window must be > 0.")
         if poisson_lambda < 0 or markov_lambda < 0:
             raise ValueError("penalty lambdas must be >= 0.")
+        if poisson_lambda > 0.5 or markov_lambda > 0.5:
+            raise ValueError("penalty lambdas must be <= 0.5 to avoid over-penalization.")
 
         self.poisson_window = poisson_window
         self.poisson_lambda = float(poisson_lambda)

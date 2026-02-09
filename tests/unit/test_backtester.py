@@ -127,3 +127,21 @@ def test_t623_report_generation_contains_json_markdown_and_config_snapshot():
     assert report.json_report["config_snapshot"]["seed"] == 42
     assert "## Backtest Summary" in report.markdown_report
 
+
+def test_walk_forward_accepts_round_as_index_and_column():
+    history = _history().sort_values("round").set_index("round", drop=False)
+
+    def recommender(train_df: pd.DataFrame, output_count: int, seed: int | None):
+        return [(1, 2, 3, 4, 5, 6)] * output_count
+
+    results = WalkForwardBacktester().run(
+        history=history,
+        recommender=recommender,
+        start_round=3,
+        end_round=5,
+        recent_n=2,
+        output_count=1,
+        seed=123,
+    )
+
+    assert [result.round_id for result in results] == [3, 4, 5]

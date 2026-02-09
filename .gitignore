@@ -45,5 +45,8 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
+# Docs
+docs/
+
 # uv
 # uv.lock - keep this for reproducibility

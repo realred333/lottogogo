@@ -20,7 +20,7 @@ class BoostCalculator:
         cold_window: int = 10,
         cold_weight: float = 0.15,
         neighbor_weight: float = 0.3,
-        carryover_weight: float = 0.2,
+        carryover_weight: float = 0.4,
         reverse_weight: float = 0.1,
     ) -> None:
         if hot_threshold <= 0:
@@ -72,11 +72,21 @@ class BoostCalculator:
     def _apply_neighbor_carryover(
         self, ordered: pd.DataFrame, boosts: dict[int, float], tags: dict[int, list[str]]
     ) -> None:
+        # 직전 회차 (N-1) 번호
         last_round_numbers = set(
             int(value)
             for value in ordered.tail(1)[NUMBER_COLUMNS].astype(int).values.flatten().tolist()
             if 1 <= int(value) <= 45
         )
+
+        # 2주 전 회차 (N-2) 번호
+        prev2_round_numbers: set[int] = set()
+        if len(ordered) >= 2:
+            prev2_round_numbers = set(
+                int(value)
+                for value in ordered.tail(2).head(1)[NUMBER_COLUMNS].astype(int).values.flatten().tolist()
+                if 1 <= int(value) <= 45
+            )
 
         neighbor_candidates: set[int] = set()
         for number in last_round_numbers:
@@ -88,6 +98,10 @@ class BoostCalculator:
             if number in last_round_numbers:
                 boosts[number] += self.carryover_weight
                 tags[number].append("carryover")
+            if number in prev2_round_numbers and number not in last_round_numbers:
+                # 2주 전 번호 (직전 회차와 중복 아닌 경우만)
+                boosts[number] += self.carryover_weight
+                tags[number].append("carryover2")
             if number in neighbor_candidates:
                 boosts[number] += self.neighbor_weight
                 tags[number].append("neighbor")
