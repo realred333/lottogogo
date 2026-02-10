@@ -1,0 +1,29 @@
+name: render-keepalive
+
+on:
+  schedule:
+    - cron: "3,13,23,33,43,53 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping Render backend
+        run: |
+          URL="https://lottogogo.onrender.com"
+
+          for attempt in 1 2 3; do
+            code="$(curl -sS -o /dev/null -w "%{http_code}" --max-time 45 "$URL" || true)"
+            if [[ "$code" =~ ^[23] ]]; then
+              echo "Render is awake (HTTP $code)"
+              exit 0
+            fi
+
+            echo "Attempt $attempt failed (HTTP $code). Retrying..."
+            sleep 20
+          done
+
+          echo "Render keep-alive ping failed."
+          exit 1
