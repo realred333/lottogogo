@@ -76,6 +76,10 @@ uv run uvicorn lottogogo.mvp.api:app --app-dir src --host 0.0.0.0 --port 8000 --
 - `NAVER_SITE_VERIFICATION` : 네이버 서치어드바이저 인증값
 - `LOTTO_HISTORY_CSV` : 기본 `history.csv` 대신 사용할 CSV 경로
 - `CORS_ALLOW_ORIGINS` : CORS 허용 origin 목록(쉼표 구분, 기본 `*`)
+- `WARMUP_TOKEN` : `/api/warmup`, `/api/pool-status` 보호 토큰 (선택)
+- `RECOMMEND_POOL_TARGET` : 프리셋/게임 버킷별 목표 풀 개수 (기본 `4`)
+- `RECOMMEND_POOL_MAX` : 프리셋/게임 버킷별 최대 풀 개수 (기본 `8`)
+- `RECOMMEND_BOOTSTRAP_SAMPLE_SIZE` : 풀이 비었을 때 즉시응답용 bootstrap 샘플 수 (기본 `6000`)
 
 ## API 예시
 
@@ -112,6 +116,28 @@ curl -X POST 'http://127.0.0.1:8000/api/recommend' \
 2. 커밋/푸시
 3. Render 재배포(또는 자동 배포 확인)
 4. 배포 URL에서 추천 버튼/후원 버튼 동작 확인
+
+## 추천 풀 동작 구조 (중요)
+
+현재 추천 API는 `10만 샘플` 계산을 유지하면서, 지연을 줄이기 위해 **pre-generated pool**을 함께 사용합니다.
+
+- 버킷 4개:
+  - `A_5`, `A_10`, `B_5`, `B_10`
+- 버킷별 목표 개수:
+  - `RECOMMEND_POOL_TARGET` 값
+- 이론상 총 풀 개수:
+  - `RECOMMEND_POOL_TARGET * 30` (각 버킷의 5/10 추천 세트 합)
+
+핵심:
+
+- 풀 조회는 **소모(pop)** 가 아니라 **회전 조회(round-robin)** 입니다.
+- 같은 세트를 여러 유저가 보게 될 수 있습니다(의도된 동작).
+- `seed`를 직접 넣은 요청만 실시간 계산 경로로 들어갑니다.
+- 풀이 완전히 비어 있어도 bootstrap 경로로 즉시 결과를 반환하고 백그라운드에서 풀을 채웁니다.
+
+상태 확인:
+
+- `GET /api/pool-status` (토큰 설정 시 `x-warmup-token` 필요)
 
 ## Render 배포
 
@@ -155,14 +181,17 @@ uvicorn lottogogo.mvp.api:app --app-dir src --host 0.0.0.0 --port $PORT
 
 - Render 프로젝트 환경변수:
   - (선택) `WARMUP_TOKEN=<Vercel의 RENDER_WARMUP_TOKEN 과 동일한 값>`
-  - (선택) `RECOMMEND_POOL_TARGET=4` (미리 준비할 추천 결과 개수)
-  - (선택) `RECOMMEND_POOL_MAX=8` (메모리 내 최대 저장 개수)
+  - (권장) `RECOMMEND_POOL_TARGET=8`
+  - (권장) `RECOMMEND_POOL_MAX=16`
+  - (선택) `RECOMMEND_BOOTSTRAP_SAMPLE_SIZE=6000`
 
 - 동작 방식:
   - 브라우저는 Vercel 도메인의 `/api/recommend`를 호출
   - Vercel 함수가 Render API로 프록시 호출
   - Render가 슬립 상태면 첫 요청이 느릴 수 있고, UI에 안내 패널이 자동 표시됨
-  - Render `/api/warmup`는 비동기로 추천 풀(pre-generated sets)을 채워서 첫 사용자 지연을 줄임
+  - Render `/api/warmup`는 비동기로 추천 풀(pre-generated sets)을 채움
+  - GitHub Actions(`render-keepalive`)는 10분마다 `/api/warmup`를 호출
+  - FastAPI 프로세스가 시작될 때도 1회 자동 warmup을 시작
 
 ## SEO 점검 포인트
 

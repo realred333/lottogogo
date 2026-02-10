@@ -92,7 +92,10 @@ def get_service() -> RecommendationService:
     """Return singleton recommendation service."""
 
     history_csv = os.getenv("LOTTO_HISTORY_CSV", "history.csv")
-    return RecommendationService(history_csv=history_csv)
+    service = RecommendationService(history_csv=history_csv)
+    # Trigger async warmup once at process bootstrap.
+    service.warmup(blocking=False)
+    return service
 
 
 def require_warmup_token(request: Request) -> None:
@@ -293,3 +296,11 @@ def warmup(request: Request) -> dict[str, object]:
     require_warmup_token(request)
     status = get_service().warmup(blocking=False)
     return {"detail": "warmup triggered", "pool": status}
+
+
+@app.get("/api/pool-status")
+def pool_status(request: Request) -> dict[str, object]:
+    """Inspect current recommendation pool status."""
+
+    require_warmup_token(request)
+    return {"pool": get_service().pool_status()}

@@ -28,6 +28,9 @@ class StubService:
         _ = blocking
         return {"A_5": 2, "A_10": 2, "B_5": 2, "B_10": 2}
 
+    def pool_status(self) -> dict[str, int]:
+        return {"A_5": 2, "A_10": 2, "B_5": 2, "B_10": 2}
+
 
 def test_home_page_includes_donate_and_backend_url(monkeypatch) -> None:
     monkeypatch.setenv("DONATE_URL", "https://example.com/donate")
@@ -136,3 +139,14 @@ def test_warmup_endpoint_requires_token_when_configured(monkeypatch) -> None:
 
     authorized = client.get("/api/warmup", headers={"x-warmup-token": "secret-token"})
     assert authorized.status_code == 200
+
+
+def test_pool_status_endpoint_returns_status(monkeypatch) -> None:
+    monkeypatch.setattr(api, "get_service", lambda: StubService())
+    client = TestClient(api.app)
+
+    response = client.get("/api/pool-status")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["pool"]["B_10"] == 2

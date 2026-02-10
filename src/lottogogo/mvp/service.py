@@ -41,6 +41,7 @@ NUMBER_COLS = ["n1", "n2", "n3", "n4", "n5", "n6"]
 ALLOWED_GAMES = {5, 10}
 DEFAULT_POOL_TARGET = 4
 DEFAULT_POOL_MAX = 8
+DEFAULT_BOOTSTRAP_SAMPLE_SIZE = 6_000
 
 RARE_PAIR_COMBINATIONS = {
     (1, 22),
@@ -179,21 +180,54 @@ class RecommendationService:
         }
         self._pool_lock = Lock()
         self._warming_keys: set[tuple[PresetName, int]] = set()
+        self._pool_cursor: dict[tuple[PresetName, int], int] = {
+            (preset, games): 0
+            for preset in PRESET_CONFIGS.keys()
+            for games in ALLOWED_GAMES
+        }
+        self._latest_result: dict[tuple[PresetName, int], dict[str, object] | None] = {
+            (preset, games): None
+            for preset in PRESET_CONFIGS.keys()
+            for games in ALLOWED_GAMES
+        }
+        self._bootstrap_sample_size = self._read_int_env(
+            "RECOMMEND_BOOTSTRAP_SAMPLE_SIZE",
+            DEFAULT_BOOTSTRAP_SAMPLE_SIZE,
+            minimum=500,
+        )
 
     def recommend(self, preset: PresetName = "A", games: int = 5, seed: int | None = None) -> dict[str, object]:
         """Generate recommendations in the API response format."""
 
         config = self._resolve_preset(preset)
         self._validate_games(games)
+        key = (config.name, games)
 
         if seed is None:
-            cached = self._take_from_pool(config.name, games)
+            cached = self._read_from_pool(config.name, games)
             if cached is not None:
                 self._start_pool_refill(config.name, games)
                 return cached
 
+            latest = self._read_latest(config.name, games)
+            if latest is not None:
+                self._start_pool_refill(config.name, games)
+                return latest
+
+            bootstrap_seed = int(datetime.now().timestamp() * 1_000_000) % 2_147_483_647
+            bootstrap = self._generate(
+                config=config,
+                games=games,
+                seed=bootstrap_seed,
+                sample_size=min(config.sample_size, self._bootstrap_sample_size),
+            )
+            self._store_in_pool(config.name, games, bootstrap)
+            self._start_pool_refill(config.name, games)
+            return bootstrap
+
         resolved_seed = seed if seed is not None else int(datetime.now().timestamp() * 1_000_000) % 2_147_483_647
         result = self._generate(config=config, games=games, seed=resolved_seed)
+        self._store_latest(key, result)
 
         if seed is None:
             self._start_pool_refill(config.name, games)
@@ -271,27 +305,46 @@ class RecommendationService:
 
             seed = int(datetime.now().timestamp() * 1_000_000) % 2_147_483_647
             generated = self._generate(config=config, games=games, seed=seed)
+            self._store_in_pool(config.name, games, generated)
 
-            with self._pool_lock:
-                if len(self._result_pool[key]) < self._pool_max:
-                    self._result_pool[key].append(generated)
+    def _store_latest(self, key: tuple[PresetName, int], result: dict[str, object]) -> None:
+        with self._pool_lock:
+            self._latest_result[key] = deepcopy(result)
 
-    def _take_from_pool(self, preset: PresetName, games: int) -> dict[str, object] | None:
+    def _read_latest(self, preset: PresetName, games: int) -> dict[str, object] | None:
+        key = (preset, games)
+        with self._pool_lock:
+            latest = self._latest_result[key]
+            if latest is None:
+                return None
+            return deepcopy(latest)
+
+    def _store_in_pool(self, preset: PresetName, games: int, result: dict[str, object]) -> None:
+        key = (preset, games)
+        with self._pool_lock:
+            bucket = self._result_pool[key]
+            if len(bucket) < self._pool_max:
+                bucket.append(deepcopy(result))
+            self._latest_result[key] = deepcopy(result)
+
+    def _read_from_pool(self, preset: PresetName, games: int) -> dict[str, object] | None:
         key = (preset, games)
         with self._pool_lock:
             bucket = self._result_pool[key]
             if not bucket:
                 return None
-            return deepcopy(bucket.popleft())
+            cursor = self._pool_cursor[key] % len(bucket)
+            self._pool_cursor[key] = (cursor + 1) % len(bucket)
+            return deepcopy(bucket[cursor])
 
-    def _generate(self, config: PresetConfig, games: int, seed: int) -> dict[str, object]:
+    def _generate(self, config: PresetConfig, games: int, seed: int, sample_size: int | None = None) -> dict[str, object]:
         probabilities = ProbabilityNormalizer.to_sampling_probabilities(
             self._raw_scores,
             temperature=config.temperature,
             min_prob_floor=config.min_prob_floor,
         )
 
-        sampled = MonteCarloSampler(sample_size=config.sample_size, chunk_size=20_000).sample(
+        sampled = MonteCarloSampler(sample_size=sample_size or config.sample_size, chunk_size=20_000).sample(
             probabilities,
             seed=seed,
         )

@@ -1108,13 +1108,13 @@
         }
       });
 
-      elements.runBtn.addEventListener("click", () => requestRecommend({ forceRandomSeed: false }));
-      elements.retryBtn.addEventListener("click", () => requestRecommend({ forceRandomSeed: true }));
+      elements.runBtn.addEventListener("click", () => requestRecommend());
+      elements.retryBtn.addEventListener("click", () => requestRecommend());
 
       // Keep first render usable even before API is connected.
       renderResult(DUMMY_RESULT);
 
-      async function requestRecommend({ forceRandomSeed }) {
+      async function requestRecommend() {
         const payload = {
           preset: state.preset,
           games: state.games,
@@ -1123,8 +1123,6 @@
         const seedText = elements.seedInput.value.trim();
         if (seedText !== "") {
           payload.seed = Number(seedText);
-        } else if (forceRandomSeed) {
-          payload.seed = Math.floor(Date.now() % 1000000);
         }
 
         setLoading(true);
