@@ -80,3 +80,22 @@ def test_pool_read_rotates_between_pre_generated_items() -> None:
     assert one["recommendations"][0]["numbers"] == [1, 2, 3, 4, 5, 6]
     assert two["recommendations"][0]["numbers"] == [7, 8, 9, 10, 11, 12]
     assert three["recommendations"][0]["numbers"] == [1, 2, 3, 4, 5, 6]
+
+
+def test_recommend_ignores_seed_and_reads_from_pool() -> None:
+    service = _make_minimal_service()
+    service._pool_target = 4
+    service._warming_keys = set()
+    service._start_pool_refill = lambda preset, games: None
+    service._bootstrap_sample_size = 6000
+
+    pooled = {
+        "meta": {"preset": "A", "percentile": 1},
+        "recommendations": [{"numbers": [1, 2, 3, 4, 5, 6], "score": 1.0, "tags": [], "reasons": []}],
+    }
+    service._store_in_pool("A", 5, pooled)
+
+    result = service.recommend(preset="A", games=5, seed=123456)
+
+    assert result["recommendations"][0]["numbers"] == [1, 2, 3, 4, 5, 6]
+    assert len(service._result_pool[("A", 5)]) == 1

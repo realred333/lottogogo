@@ -32,6 +32,23 @@ class StubService:
         return {"A_5": 2, "A_10": 2, "B_5": 2, "B_10": 2}
 
 
+class StrictStubService:
+    """Service with no seed argument to ensure API ignores payload seed."""
+
+    def recommend(self, preset: str, games: int) -> dict[str, object]:
+        return {
+            "meta": {"preset": preset, "percentile": 1},
+            "recommendations": [
+                {
+                    "numbers": [1, 2, 3, 4, 5, 6],
+                    "score": 1.0,
+                    "tags": [],
+                    "reasons": [],
+                }
+            ],
+        }
+
+
 def test_home_page_includes_donate_and_backend_url(monkeypatch) -> None:
     monkeypatch.setenv("DONATE_URL", "https://example.com/donate")
     monkeypatch.setenv("BACKEND_URL", "http://127.0.0.1:9000")
@@ -71,6 +88,17 @@ def test_recommend_endpoint_returns_expected_shape(monkeypatch) -> None:
     assert payload["meta"]["preset"] == "A"
     assert payload["meta"]["percentile"] == 17
     assert payload["recommendations"][0]["numbers"] == [1, 9, 17, 23, 34, 41]
+
+
+def test_recommend_endpoint_ignores_seed_payload(monkeypatch) -> None:
+    monkeypatch.setattr(api, "get_service", lambda: StrictStubService())
+    client = TestClient(api.app)
+
+    response = client.post("/api/recommend", json={"preset": "A", "games": 5, "seed": 42})
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["recommendations"][0]["numbers"] == [1, 2, 3, 4, 5, 6]
 
 
 def test_recommend_endpoint_rejects_invalid_games() -> None:

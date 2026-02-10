@@ -201,38 +201,28 @@ class RecommendationService:
 
         config = self._resolve_preset(preset)
         self._validate_games(games)
-        key = (config.name, games)
+        _ = seed  # Seed is intentionally ignored to keep pool-based latency stable.
 
-        if seed is None:
-            cached = self._read_from_pool(config.name, games)
-            if cached is not None:
-                self._start_pool_refill(config.name, games)
-                return cached
-
-            latest = self._read_latest(config.name, games)
-            if latest is not None:
-                self._start_pool_refill(config.name, games)
-                return latest
-
-            bootstrap_seed = int(datetime.now().timestamp() * 1_000_000) % 2_147_483_647
-            bootstrap = self._generate(
-                config=config,
-                games=games,
-                seed=bootstrap_seed,
-                sample_size=min(config.sample_size, self._bootstrap_sample_size),
-            )
-            self._store_in_pool(config.name, games, bootstrap)
+        cached = self._read_from_pool(config.name, games)
+        if cached is not None:
             self._start_pool_refill(config.name, games)
-            return bootstrap
+            return cached
 
-        resolved_seed = seed if seed is not None else int(datetime.now().timestamp() * 1_000_000) % 2_147_483_647
-        result = self._generate(config=config, games=games, seed=resolved_seed)
-        self._store_latest(key, result)
-
-        if seed is None:
+        latest = self._read_latest(config.name, games)
+        if latest is not None:
             self._start_pool_refill(config.name, games)
+            return latest
 
-        return result
+        bootstrap_seed = int(datetime.now().timestamp() * 1_000_000) % 2_147_483_647
+        bootstrap = self._generate(
+            config=config,
+            games=games,
+            seed=bootstrap_seed,
+            sample_size=min(config.sample_size, self._bootstrap_sample_size),
+        )
+        self._store_in_pool(config.name, games, bootstrap)
+        self._start_pool_refill(config.name, games)
+        return bootstrap
 
     def warmup(
         self,

@@ -31,7 +31,7 @@ class RecommendRequest(BaseModel):
 
     preset: Literal["A", "B"] = "A"
     games: Literal[5, 10] = 5
-    seed: int | None = Field(default=None, ge=0, le=2_147_483_647)
+    seed: int | None = Field(default=None, ge=0, le=2_147_483_647, description="Deprecated. Ignored.")
 
 
 class RecommendationItem(BaseModel):
@@ -278,7 +278,6 @@ def recommend(payload: RecommendRequest) -> RecommendResponse:
         result = get_service().recommend(
             preset=payload.preset,
             games=payload.games,
-            seed=payload.seed,
         )
         return RecommendResponse.model_validate(result)
     except ValueError as exc:

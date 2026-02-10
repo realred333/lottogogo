@@ -88,7 +88,7 @@ uv run uvicorn lottogogo.mvp.api:app --app-dir src --host 0.0.0.0 --port 8000 --
 ```bash
 curl -X POST 'http://127.0.0.1:8000/api/recommend' \
   -H 'content-type: application/json' \
-  -d '{"preset":"A","games":5,"seed":42}'
+  -d '{"preset":"A","games":5}'
 ```
 
 ### Response (shape)
@@ -132,7 +132,7 @@ curl -X POST 'http://127.0.0.1:8000/api/recommend' \
 
 - 풀 조회는 **소모(pop)** 가 아니라 **회전 조회(round-robin)** 입니다.
 - 같은 세트를 여러 유저가 보게 될 수 있습니다(의도된 동작).
-- `seed`를 직접 넣은 요청만 실시간 계산 경로로 들어갑니다.
+- API 호환성을 위해 `seed` 필드는 남겨두지만, 현재는 무시됩니다.
 - 풀이 완전히 비어 있어도 bootstrap 경로로 즉시 결과를 반환하고 백그라운드에서 풀을 채웁니다.
 
 상태 확인:
