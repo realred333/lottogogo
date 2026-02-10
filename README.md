@@ -151,11 +151,18 @@ uvicorn lottogogo.mvp.api:app --app-dir src --host 0.0.0.0 --port $PORT
 
 - Vercel 프로젝트 환경변수:
   - `RENDER_BACKEND_URL=https://<your-render-service>.onrender.com`
+  - (선택) `RENDER_WARMUP_TOKEN=<임의의긴토큰>`
+
+- Render 프로젝트 환경변수:
+  - (선택) `WARMUP_TOKEN=<Vercel의 RENDER_WARMUP_TOKEN 과 동일한 값>`
+  - (선택) `RECOMMEND_POOL_TARGET=4` (미리 준비할 추천 결과 개수)
+  - (선택) `RECOMMEND_POOL_MAX=8` (메모리 내 최대 저장 개수)
 
 - 동작 방식:
   - 브라우저는 Vercel 도메인의 `/api/recommend`를 호출
   - Vercel 함수가 Render API로 프록시 호출
   - Render가 슬립 상태면 첫 요청이 느릴 수 있고, UI에 안내 패널이 자동 표시됨
+  - Render `/api/warmup`는 비동기로 추천 풀(pre-generated sets)을 채워서 첫 사용자 지연을 줄임
 
 ## SEO 점검 포인트
 

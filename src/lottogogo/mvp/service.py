@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
-from collections import Counter
+from collections import Counter, deque
+from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime
+import os
 from pathlib import Path
+from threading import Lock, Thread
 from typing import Literal, cast
 
 import pandas as pd
@@ -36,6 +39,8 @@ PresetName = Literal["A", "B"]
 
 NUMBER_COLS = ["n1", "n2", "n3", "n4", "n5", "n6"]
 ALLOWED_GAMES = {5, 10}
+DEFAULT_POOL_TARGET = 4
+DEFAULT_POOL_MAX = 8
 
 RARE_PAIR_COMBINATIONS = {
     (1, 22),
@@ -100,7 +105,7 @@ PRESET_CONFIGS: dict[PresetName, PresetConfig] = {
         max_odd=4,
         min_high=2,
         max_high=4,
-        sample_size=70_000,
+        sample_size=100_000,
         top_k=180,
         max_overlap=3,
         temperature=0.5,
@@ -121,7 +126,7 @@ PRESET_CONFIGS: dict[PresetName, PresetConfig] = {
         max_odd=5,
         min_high=1,
         max_high=5,
-        sample_size=70_000,
+        sample_size=100_000,
         top_k=220,
         max_overlap=4,
         temperature=0.65,
@@ -161,6 +166,19 @@ class RecommendationService:
             tuple(int(row[column]) for column in NUMBER_COLS)
             for _, row in self.history.iterrows()
         ]
+        # History is immutable at runtime, so score components can be cached once per process.
+        self._raw_scores, self._boost_tags, self._carryover_numbers = self._build_scores(self.history)
+        self._pool_target = self._read_int_env("RECOMMEND_POOL_TARGET", DEFAULT_POOL_TARGET, minimum=0)
+        self._pool_max = self._read_int_env("RECOMMEND_POOL_MAX", DEFAULT_POOL_MAX, minimum=1)
+        if self._pool_max < max(1, self._pool_target):
+            self._pool_max = max(1, self._pool_target)
+        self._result_pool: dict[tuple[PresetName, int], deque[dict[str, object]]] = {
+            (preset, games): deque(maxlen=self._pool_max)
+            for preset in PRESET_CONFIGS.keys()
+            for games in ALLOWED_GAMES
+        }
+        self._pool_lock = Lock()
+        self._warming_keys: set[tuple[PresetName, int]] = set()
 
     def recommend(self, preset: PresetName = "A", games: int = 5, seed: int | None = None) -> dict[str, object]:
         """Generate recommendations in the API response format."""
@@ -168,27 +186,123 @@ class RecommendationService:
         config = self._resolve_preset(preset)
         self._validate_games(games)
 
-        resolved_seed = seed if seed is not None else int(datetime.now().timestamp()) % 1_000_000
+        if seed is None:
+            cached = self._take_from_pool(config.name, games)
+            if cached is not None:
+                self._start_pool_refill(config.name, games)
+                return cached
 
-        raw_scores, boost_tags, carryover_numbers = self._build_scores(self.history)
+        resolved_seed = seed if seed is not None else int(datetime.now().timestamp() * 1_000_000) % 2_147_483_647
+        result = self._generate(config=config, games=games, seed=resolved_seed)
+
+        if seed is None:
+            self._start_pool_refill(config.name, games)
+
+        return result
+
+    def warmup(
+        self,
+        presets: tuple[PresetName, ...] | None = None,
+        games_list: tuple[int, ...] | None = None,
+        blocking: bool = False,
+    ) -> dict[str, int]:
+        """Fill recommendation pools proactively."""
+
+        target_presets = presets or tuple(PRESET_CONFIGS.keys())
+        target_games = games_list or tuple(sorted(ALLOWED_GAMES))
+
+        for preset in target_presets:
+            config = self._resolve_preset(preset)
+            for games in target_games:
+                self._validate_games(games)
+                if blocking:
+                    self._fill_pool_until_target(config, games)
+                else:
+                    self._start_pool_refill(config.name, games)
+
+        return self.pool_status()
+
+    def pool_status(self) -> dict[str, int]:
+        """Return current pool counts by preset/games."""
+
+        with self._pool_lock:
+            return {
+                f"{preset}_{games}": len(self._result_pool[(preset, games)])
+                for preset in PRESET_CONFIGS.keys()
+                for games in sorted(ALLOWED_GAMES)
+            }
+
+    @staticmethod
+    def _read_int_env(name: str, default: int, minimum: int) -> int:
+        raw = os.getenv(name, "").strip()
+        if not raw:
+            return default
+        try:
+            value = int(raw)
+        except ValueError:
+            return default
+        return max(minimum, value)
+
+    def _start_pool_refill(self, preset: PresetName, games: int) -> None:
+        if self._pool_target <= 0:
+            return
+        key = (preset, games)
+        with self._pool_lock:
+            current = len(self._result_pool[key])
+            if current >= self._pool_target or key in self._warming_keys:
+                return
+            self._warming_keys.add(key)
+        Thread(target=self._refill_worker, args=(preset, games), daemon=True).start()
+
+    def _refill_worker(self, preset: PresetName, games: int) -> None:
+        try:
+            config = self._resolve_preset(preset)
+            self._fill_pool_until_target(config, games)
+        finally:
+            with self._pool_lock:
+                self._warming_keys.discard((preset, games))
+
+    def _fill_pool_until_target(self, config: PresetConfig, games: int) -> None:
+        key = (config.name, games)
+        while True:
+            with self._pool_lock:
+                if len(self._result_pool[key]) >= self._pool_target:
+                    return
+
+            seed = int(datetime.now().timestamp() * 1_000_000) % 2_147_483_647
+            generated = self._generate(config=config, games=games, seed=seed)
+
+            with self._pool_lock:
+                if len(self._result_pool[key]) < self._pool_max:
+                    self._result_pool[key].append(generated)
+
+    def _take_from_pool(self, preset: PresetName, games: int) -> dict[str, object] | None:
+        key = (preset, games)
+        with self._pool_lock:
+            bucket = self._result_pool[key]
+            if not bucket:
+                return None
+            return deepcopy(bucket.popleft())
+
+    def _generate(self, config: PresetConfig, games: int, seed: int) -> dict[str, object]:
         probabilities = ProbabilityNormalizer.to_sampling_probabilities(
-            raw_scores,
+            self._raw_scores,
             temperature=config.temperature,
             min_prob_floor=config.min_prob_floor,
         )
 
         sampled = MonteCarloSampler(sample_size=config.sample_size, chunk_size=20_000).sample(
             probabilities,
-            seed=resolved_seed,
+            seed=seed,
         )
 
         filtered = self._apply_base_filters(sampled, config)
-        filtered = self._apply_preset_filters(filtered, carryover_numbers, config)
+        filtered = self._apply_preset_filters(filtered, self._carryover_numbers, config)
 
         if not filtered:
             filtered = [tuple(sorted(int(value) for value in combo)) for combo in sampled]
 
-        ranked = CombinationRanker().rank(filtered, raw_scores, top_k=config.top_k)
+        ranked = CombinationRanker().rank(filtered, self._raw_scores, top_k=config.top_k)
         if not ranked:
             raise RuntimeError("추천 가능한 조합을 생성하지 못했습니다.")
 
@@ -203,13 +317,13 @@ class RecommendationService:
             score = (
                 float(rank_entry.combo_score)
                 if rank_entry is not None
-                else float(sum(raw_scores.get(number, 0.0) for number in numbers))
+                else float(sum(self._raw_scores.get(number, 0.0) for number in numbers))
             )
             response_items.append(
                 {
                     "numbers": list(numbers),
                     "score": round(score, 6),
-                    "tags": self._build_tags(numbers, boost_tags),
+                    "tags": self._build_tags(numbers, self._boost_tags),
                     "reasons": self._build_reasons(config),
                 }
             )

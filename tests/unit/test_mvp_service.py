@@ -8,6 +8,8 @@ from lottogogo.mvp.service import PRESET_CONFIGS, contains_rare_pair, exceeds_ca
 def test_presets_are_defined_for_a_and_b() -> None:
     assert set(PRESET_CONFIGS.keys()) == {"A", "B"}
     assert PRESET_CONFIGS["A"].min_ac > PRESET_CONFIGS["B"].min_ac
+    assert PRESET_CONFIGS["A"].sample_size == 100_000
+    assert PRESET_CONFIGS["B"].sample_size == 100_000
 
 
 def test_contains_rare_pair_detects_known_rare_pair() -> None:

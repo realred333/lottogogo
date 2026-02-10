@@ -10,14 +10,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Ping Render backend
+      - name: Ping Render warmup endpoint
+        env:
+          WARMUP_TOKEN: ${{ secrets.RENDER_WARMUP_TOKEN }}
         run: |
-          URL="https://lottogogo.onrender.com"
+          URL="https://lottogogo.onrender.com/api/warmup"
 
           for attempt in 1 2 3; do
-            code="$(curl -sS -o /dev/null -w "%{http_code}" --max-time 45 "$URL" || true)"
+            if [ -n "$WARMUP_TOKEN" ]; then
+              code="$(curl -sS -o /dev/null -w "%{http_code}" --max-time 30 -H "x-warmup-token: $WARMUP_TOKEN" "$URL" || true)"
+            else
+              code="$(curl -sS -o /dev/null -w "%{http_code}" --max-time 30 "$URL" || true)"
+            fi
+
             if [[ "$code" =~ ^[23] ]]; then
-              echo "Render is awake (HTTP $code)"
+              echo "Render warmup accepted (HTTP $code)"
               exit 0
             fi
 
@@ -25,5 +32,5 @@ jobs:
             sleep 20
           done
 
-          echo "Render keep-alive ping failed."
+          echo "Render warmup ping failed."
           exit 1

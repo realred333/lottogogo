@@ -69,3 +69,12 @@ def test_t417_history_filter_overlap():
     assert not filt.evaluate([1, 2, 3, 4, 5, 20]).passed
     assert filt.evaluate([1, 2, 3, 4, 20, 21]).passed
 
+
+def test_t418_history_filter_exact_match_threshold_6():
+    history = [
+        [1, 2, 3, 4, 5, 6],
+    ]
+    filt = HistoryFilter(historical_draws=history, match_threshold=6)
+
+    assert not filt.evaluate([1, 2, 3, 4, 5, 6]).passed
+    assert filt.evaluate([1, 2, 3, 4, 5, 7]).passed

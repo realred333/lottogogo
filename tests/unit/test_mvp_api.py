@@ -24,6 +24,10 @@ class StubService:
             ],
         }
 
+    def warmup(self, blocking: bool = False) -> dict[str, int]:
+        _ = blocking
+        return {"A_5": 2, "A_10": 2, "B_5": 2, "B_10": 2}
+
 
 def test_home_page_includes_donate_and_backend_url(monkeypatch) -> None:
     monkeypatch.setenv("DONATE_URL", "https://example.com/donate")
@@ -108,3 +112,27 @@ def test_sitemap_xml_lists_home_url() -> None:
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/xml")
     assert "<loc>http://testserver/</loc>" in response.text
+
+
+def test_warmup_endpoint_returns_pool_status(monkeypatch) -> None:
+    monkeypatch.setattr(api, "get_service", lambda: StubService())
+    client = TestClient(api.app)
+
+    response = client.get("/api/warmup")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["detail"] == "warmup triggered"
+    assert payload["pool"]["A_5"] == 2
+
+
+def test_warmup_endpoint_requires_token_when_configured(monkeypatch) -> None:
+    monkeypatch.setenv("WARMUP_TOKEN", "secret-token")
+    monkeypatch.setattr(api, "get_service", lambda: StubService())
+    client = TestClient(api.app)
+
+    unauthorized = client.get("/api/warmup")
+    assert unauthorized.status_code == 401
+
+    authorized = client.get("/api/warmup", headers={"x-warmup-token": "secret-token"})
+    assert authorized.status_code == 200

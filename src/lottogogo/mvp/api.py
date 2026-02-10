@@ -95,6 +95,18 @@ def get_service() -> RecommendationService:
     return RecommendationService(history_csv=history_csv)
 
 
+def require_warmup_token(request: Request) -> None:
+    """Optionally protect warmup endpoint with token."""
+
+    expected = os.getenv("WARMUP_TOKEN", "").strip()
+    if not expected:
+        return
+
+    supplied = request.headers.get("x-warmup-token", "").strip() or request.query_params.get("token", "").strip()
+    if supplied != expected:
+        raise HTTPException(status_code=401, detail="warmup token mismatch")
+
+
 def get_donate_url() -> str:
     """Resolve donate URL for CTA button."""
 
@@ -272,3 +284,12 @@ def recommend(payload: RecommendRequest) -> RecommendResponse:
         raise HTTPException(status_code=500, detail=f"데이터 파일을 찾을 수 없습니다: {exc}") from exc
     except Exception as exc:  # pragma: no cover - defensive fallback
         raise HTTPException(status_code=500, detail=f"추천 생성 실패: {exc}") from exc
+
+
+@app.get("/api/warmup")
+def warmup(request: Request) -> dict[str, object]:
+    """Trigger async pre-generation for recommendation pools."""
+
+    require_warmup_token(request)
+    status = get_service().warmup(blocking=False)
+    return {"detail": "warmup triggered", "pool": status}
