@@ -155,6 +155,18 @@ def get_optional_env(name: str) -> str:
     return os.getenv(name, "").strip()
 
 
+def get_og_image_url(base_url: str) -> str:
+    """Resolve OG image URL with a safe default asset path."""
+
+    return get_optional_env("OG_IMAGE_URL") or f"{base_url}/assets/og-image.png"
+
+
+def get_twitter_image_url(base_url: str, og_image_url: str) -> str:
+    """Resolve Twitter image URL using explicit value or OG fallback."""
+
+    return get_optional_env("TWITTER_IMAGE_URL") or og_image_url or f"{base_url}/assets/og-image.png"
+
+
 def build_optional_meta_tag(attr: str, key: str, value: str) -> str:
     """Build optional single-line meta tag."""
 
@@ -211,8 +223,8 @@ def home(request: Request) -> HTMLResponse:
     canonical_url = f"{base_url}/"
     sitemap_url = f"{base_url}/sitemap.xml"
 
-    og_image = get_optional_env("OG_IMAGE_URL")
-    twitter_image = get_optional_env("TWITTER_IMAGE_URL") or og_image
+    og_image = get_og_image_url(base_url)
+    twitter_image = get_twitter_image_url(base_url, og_image)
     google_verification = get_optional_env("GOOGLE_SITE_VERIFICATION")
     naver_verification = get_optional_env("NAVER_SITE_VERIFICATION")
 

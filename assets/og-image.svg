@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">LottoGoGo Open Graph Image</title>
+  <desc id="desc">LottoGoGo statistics-based lotto assistant preview image.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#051022" />
+      <stop offset="55%" stop-color="#0d2440" />
+      <stop offset="100%" stop-color="#111a2d" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#41f3c6" />
+      <stop offset="55%" stop-color="#0dd2a0" />
+      <stop offset="100%" stop-color="#ff8c66" />
+    </linearGradient>
+    <filter id="blur-lg" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="34" />
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <circle cx="180" cy="120" r="130" fill="#36dfb7" opacity="0.35" filter="url(#blur-lg)" />
+  <circle cx="1020" cy="115" r="140" fill="#5e6dff" opacity="0.34" filter="url(#blur-lg)" />
+  <circle cx="960" cy="540" r="170" fill="#ff8c66" opacity="0.24" filter="url(#blur-lg)" />
+
+  <g transform="translate(110 88)">
+    <rect x="0" y="0" width="980" height="454" rx="32" fill="#0f1f37" fill-opacity="0.78" stroke="#ffffff" stroke-opacity="0.18" />
+    <rect x="34" y="36" width="240" height="50" rx="25" fill="#0dd2a0" fill-opacity="0.2" stroke="#41f3c6" stroke-opacity="0.56" />
+    <text x="56" y="68" fill="#8bffe1" font-size="28" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-weight="700">LottoGoGo</text>
+
+    <text x="34" y="170" fill="#f5f8ff" font-size="76" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-weight="800">Stat-Based</text>
+    <text x="34" y="248" fill="url(#accent)" font-size="76" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-weight="800">Lotto Assistant</text>
+    <text x="34" y="300" fill="#a8b3cf" font-size="30" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-weight="500">Fast candidate generation with weekly-updated model data</text>
+
+    <g transform="translate(34 345)">
+      <circle cx="0" cy="0" r="30" fill="#3aa3ff" />
+      <circle cx="84" cy="0" r="30" fill="#0dd2a0" />
+      <circle cx="168" cy="0" r="30" fill="#0dd2a0" />
+      <circle cx="252" cy="0" r="30" fill="#ffb24d" />
+      <circle cx="336" cy="0" r="30" fill="#ff7bb3" />
+      <circle cx="420" cy="0" r="30" fill="#8b95ff" />
+      <text x="-9" y="10" fill="#ffffff" font-size="28" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-weight="700">3</text>
+      <text x="67" y="10" fill="#ffffff" font-size="28" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-weight="700">11</text>
+      <text x="151" y="10" fill="#ffffff" font-size="28" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-weight="700">19</text>
+      <text x="236" y="10" fill="#ffffff" font-size="28" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-weight="700">24</text>
+      <text x="320" y="10" fill="#ffffff" font-size="28" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-weight="700">37</text>
+      <text x="404" y="10" fill="#ffffff" font-size="28" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-weight="700">42</text>
+    </g>
+  </g>
+</svg>

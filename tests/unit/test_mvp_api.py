@@ -71,6 +71,8 @@ def test_home_page_includes_seo_meta(monkeypatch) -> None:
 
     assert response.status_code == 200
     assert '<link rel="canonical" href="https://lottogogo.example/" />' in response.text
+    assert '<meta property="og:image" content="https://lottogogo.example/assets/og-image.png" />' in response.text
+    assert '<meta name="twitter:image" content="https://lottogogo.example/assets/og-image.png" />' in response.text
     assert '<meta name="google-site-verification" content="google-token" />' in response.text
     assert '<meta name="naver-site-verification" content="naver-token" />' in response.text
     assert "__SEO_" not in response.text

@@ -134,6 +134,8 @@ uv run python scripts/build_frontend_model.py --history-csv history.csv --output
   - Google verification
   - Naver verification
   - canonical / OG / Twitter / JSON-LD
+- 기본 OG/Twitter 이미지는 `assets/og-image.png`를 사용
+  - 필요하면 `OG_IMAGE_URL`, `TWITTER_IMAGE_URL`로 교체 가능
 - `robots.txt`, `sitemap.xml`은 `vercel.json` 리라이트로 `api/robots.js`, `api/sitemap.js` 제공
 
 ## 환경변수

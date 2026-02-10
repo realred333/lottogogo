@@ -41,8 +41,9 @@ seo_description = os.getenv(
 canonical_url = f"{base_url}/"
 sitemap_url = f"{base_url}/sitemap.xml"
 
-og_image = os.getenv("OG_IMAGE_URL", "").strip()
-twitter_image = os.getenv("TWITTER_IMAGE_URL", "").strip() or og_image
+default_og_image = f"{base_url}/assets/og-image.png"
+og_image = os.getenv("OG_IMAGE_URL", default_og_image).strip() or default_og_image
+twitter_image = os.getenv("TWITTER_IMAGE_URL", default_og_image).strip() or og_image
 
 google_verification = os.getenv("GOOGLE_SITE_VERIFICATION", "PbH0mni_SrDNFhpznnlQNcklvSnXtGVP9GhOhedijYQ").strip()
 naver_verification = os.getenv("NAVER_SITE_VERIFICATION", "bfd8bd236fd5f7ac42c026fbb28dfd437612f0fd").strip()
