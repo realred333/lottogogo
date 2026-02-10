@@ -117,6 +117,32 @@ curl -X POST 'http://127.0.0.1:8000/api/recommend' \
 3. Render 재배포(또는 자동 배포 확인)
 4. 배포 URL에서 추천 버튼/후원 버튼 동작 확인
 
+## 주간 당첨번호 자동 갱신 (GitHub Actions)
+
+`/.github/workflows/lotto-history-update.yml` 이 매주 토요일(KST 저녁 시간대, 3회 재시도) 자동 실행됩니다.
+
+- 실행 스크립트: `scripts/update_history_csv.py`
+- 동작 원칙:
+  - `history.csv`의 마지막 회차를 읽음
+  - `마지막 회차 + 1`부터 최신 회차까지만 조회
+  - 신규 회차가 있을 때만 `history.csv`에 append 후 커밋/푸시
+  - 신규 회차가 없으면 아무것도 커밋하지 않음
+- 안전장치:
+  - 기본값으로 `history.csv`가 없거나 비어 있으면 실패 처리
+  - 즉, 실수로 `1회부터 전체 재수집`이 돌지 않음
+
+수동 실행(로컬):
+
+```bash
+uv run python scripts/update_history_csv.py --csv history.csv --workers 8
+```
+
+초기 부트스트랩이 필요할 때만 아래처럼 명시적으로 허용:
+
+```bash
+uv run python scripts/update_history_csv.py --csv history.csv --allow-bootstrap
+```
+
 ## 추천 풀 동작 구조 (중요)
 
 현재 추천 API는 `10만 샘플` 계산을 유지하면서, 지연을 줄이기 위해 **pre-generated pool**을 함께 사용합니다.

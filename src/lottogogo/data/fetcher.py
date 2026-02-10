@@ -205,26 +205,47 @@ class LottoHistoryFetcher:
         if path.exists():
             existing = pd.read_csv(path, encoding=encoding)
             if existing.empty:
-                existing_core = pd.DataFrame(columns=HISTORY_COLUMNS)
+                if all(column in existing.columns for column in HISTORY_COLUMNS):
+                    base_columns = list(existing.columns)
+                else:
+                    base_columns = HISTORY_COLUMNS.copy()
+                existing_all = pd.DataFrame(columns=base_columns)
             else:
                 missing = [column for column in HISTORY_COLUMNS if column not in existing.columns]
                 if missing:
                     raise LottoFetchError(f"history csv missing required columns: {missing}")
-                existing_core = existing[HISTORY_COLUMNS].copy()
+                existing_all = existing.copy()
         else:
-            existing_core = pd.DataFrame(columns=HISTORY_COLUMNS)
+            existing_all = pd.DataFrame(columns=HISTORY_COLUMNS)
 
         last_round = self.latest_round_from_history_csv(path, encoding=encoding)
         new_rounds = self.fetch_new_rounds_since(last_round, workers=workers)
         if not new_rounds:
-            merged = existing_core.copy()
+            merged = existing_all.copy()
             if "round" in merged.columns and not merged.empty:
                 merged["round"] = pd.to_numeric(merged["round"], errors="raise").astype(int)
-                merged = merged.sort_values("round").reset_index(drop=True)
+                merged = (
+                    merged.drop_duplicates(subset=["round"], keep="last")
+                    .sort_values("round")
+                    .reset_index(drop=True)
+                )
             return merged
 
-        new_frame = pd.DataFrame([result.as_history_dict() for result in new_rounds], columns=HISTORY_COLUMNS)
-        merged = pd.concat([existing_core, new_frame], ignore_index=True)
+        base_columns = list(existing_all.columns) if list(existing_all.columns) else HISTORY_COLUMNS.copy()
+        for column in HISTORY_COLUMNS:
+            if column not in base_columns:
+                base_columns.append(column)
+                existing_all[column] = pd.NA
+
+        new_frame_raw = pd.DataFrame([result.as_dict() for result in new_rounds])
+        new_frame = pd.DataFrame(
+            {
+                column: (new_frame_raw[column] if column in new_frame_raw.columns else pd.NA)
+                for column in base_columns
+            }
+        )
+
+        merged = pd.concat([existing_all[base_columns], new_frame[base_columns]], ignore_index=True)
         merged["round"] = pd.to_numeric(merged["round"], errors="raise").astype(int)
         for column in HISTORY_COLUMNS[1:]:
             merged[column] = pd.to_numeric(merged[column], errors="raise").astype(int)

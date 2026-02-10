@@ -160,3 +160,38 @@ def test_update_history_csv_appends_only_new_rows(tmp_path: Path, monkeypatch):
 
     saved = csv_path.read_text(encoding="utf-8")
     assert "1210,13,14,15,16,17,18" in saved
+
+
+def test_update_history_csv_preserves_existing_extra_columns(tmp_path: Path, monkeypatch):
+    csv_path = tmp_path / "history.csv"
+    csv_path.write_text(
+        "round,n1,n2,n3,n4,n5,n6,bonus\n"
+        "1209,2,17,20,35,37,39,43\n",
+        encoding="utf-8",
+    )
+    fetcher = LottoHistoryFetcher()
+
+    monkeypatch.setattr(
+        fetcher,
+        "fetch_new_rounds_since",
+        lambda last_round, workers=8: [
+            LottoRoundResult(
+                round=1210,
+                n1=1,
+                n2=7,
+                n3=9,
+                n4=17,
+                n5=27,
+                n6=38,
+                bonus=31,
+                draw_date="20260207",
+            )
+        ],
+    )
+
+    merged = fetcher.update_history_csv(csv_path, workers=5)
+    assert "bonus" in merged.columns
+    assert merged[merged["round"] == 1210]["bonus"].iloc[0] == 31
+
+    saved = csv_path.read_text(encoding="utf-8")
+    assert "1210,1,7,9,17,27,38,31" in saved
