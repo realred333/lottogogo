@@ -1128,9 +1128,22 @@
             body: JSON.stringify(payload),
           });
 
-          const data = await response.json();
+          const { data, text, isJson } = await readApiResponse(response);
           if (!response.ok) {
-            throw new Error(data?.detail ?? "추천 요청 실패");
+            const detail =
+              typeof data?.detail === "string" && data.detail.trim() !== ""
+                ? data.detail.trim()
+                : summarizeErrorText(text) || `서버 응답 오류 (${response.status})`;
+            throw new Error(detail);
+          }
+
+          if (!isJson || !data || !Array.isArray(data.recommendations)) {
+            const hint = summarizeErrorText(text);
+            throw new Error(
+              hint
+                ? `서버 응답 형식이 올바르지 않습니다: ${hint}`
+                : "서버 응답 형식이 올바르지 않습니다. 잠시 후 다시 시도해주세요."
+            );
           }
 
           renderResult(data);
@@ -1144,6 +1157,35 @@
         } finally {
           setLoading(false);
         }
+      }
+
+      async function readApiResponse(response) {
+        const text = await response.text();
+        const contentType = (response.headers.get("content-type") || "").toLowerCase();
+        const isJson = contentType.includes("application/json");
+
+        if (!text || !isJson) {
+          return { data: null, text, isJson };
+        }
+
+        try {
+          return { data: JSON.parse(text), text, isJson };
+        } catch (_error) {
+          return { data: null, text, isJson };
+        }
+      }
+
+      function summarizeErrorText(text) {
+        if (typeof text !== "string") return "";
+
+        const trimmed = text.trim();
+        if (!trimmed) return "";
+
+        if (/^<!doctype html/i.test(trimmed) || /^<html/i.test(trimmed)) {
+          return "백엔드가 HTML 오류 페이지를 반환했습니다. 잠시 후 다시 시도해주세요.";
+        }
+
+        return trimmed.replace(/\s+/g, " ").slice(0, 140);
       }
 
       function renderResult(data) {
