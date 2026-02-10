@@ -122,6 +122,12 @@ def get_backend_url() -> str:
     return os.getenv("BACKEND_URL", "")
 
 
+def get_model_url() -> str:
+    """Resolve model.json URL consumed by frontend Web Worker."""
+
+    return os.getenv("MODEL_URL", "/data/model.json")
+
+
 def get_public_base_url(request: Request) -> str:
     """Resolve canonical base URL from env or incoming request."""
 
@@ -213,6 +219,7 @@ def home(request: Request) -> HTMLResponse:
     replacements = {
         "__DONATE_URL__": html.escape(get_donate_url(), quote=True),
         "__BACKEND_URL__": html.escape(get_backend_url(), quote=True),
+        "__MODEL_URL__": html.escape(get_model_url(), quote=True),
         "__SEO_TITLE__": html.escape(seo_title, quote=True),
         "__SEO_DESCRIPTION__": html.escape(seo_description, quote=True),
         "__SEO_CANONICAL_URL__": html.escape(canonical_url, quote=True),

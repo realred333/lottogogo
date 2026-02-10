@@ -49,16 +49,16 @@ class StrictStubService:
         }
 
 
-def test_home_page_includes_donate_and_backend_url(monkeypatch) -> None:
+def test_home_page_includes_donate_and_model_url(monkeypatch) -> None:
     monkeypatch.setenv("DONATE_URL", "https://example.com/donate")
-    monkeypatch.setenv("BACKEND_URL", "http://127.0.0.1:9000")
+    monkeypatch.setenv("MODEL_URL", "/custom/model.json")
     client = TestClient(api.app)
 
     response = client.get("/")
 
     assert response.status_code == 200
     assert "https://example.com/donate" in response.text
-    assert "http://127.0.0.1:9000" in response.text
+    assert "/custom/model.json" in response.text
 
 
 def test_home_page_includes_seo_meta(monkeypatch) -> None:

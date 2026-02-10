@@ -1,33 +1,45 @@
 # LottoGoGo v2
 
-확률 실험 기반 선택 보조 도구입니다.
+로또 번호 **선택 보조용 확률 실험 프로젝트**입니다.
+당첨을 보장하지 않으며, 통계 실험 결과를 참고 정보로 제공합니다.
 
-> A small probability experiment.
-> No prediction.
-> No guarantees.
+## 핵심 변경사항 (현재 운영 구조)
 
-이 프로젝트는 과거 회차 데이터를 바탕으로 번호 점수를 계산하고,
-샘플링/필터링/랭킹을 통해 조합을 제안합니다.
+- `Render` 의존 제거
+- `Vercel + GitHub Actions` 중심 운영
+- 매 요청 서버 계산 대신:
+  - 주간 배치에서 `history.csv` + `model.json` 갱신
+  - 프론트에서 Web Worker로 즉시 조합 생성/필터링
 
-## 원칙
+## 아키텍처
 
-- 당첨을 보장하지 않습니다.
-- 결과는 통계 실험용 참고 정보입니다.
-- 구매 판단과 책임은 사용자에게 있습니다.
+1. GitHub Actions (토요일)
+- 신규 회차만 `history.csv` 업데이트 (증분)
+- Python으로 preset별 100k Monte Carlo 실행
+- 결과를 `data/model.json`으로 생성
+- 변경이 있을 때만 커밋/푸시
 
-## 주요 기능
-
-- `POST /api/recommend` 단일 API
-- 단일 웹 페이지(`/`)에서 Preset A/B, 5/10게임 선택
-- 추천 근거(tags/reasons) 표시
-- 후원 버튼(`DONATE_URL`) 지원
+2. Frontend (Vercel 정적)
+- 브라우저가 `data/model.json` 로드
+- `assets/recommend-worker.js`에서 비동기 생성
+- AC/총합/홀짝/고저/구간/히스토리 필터 적용
+- 다양성(max overlap) 적용 후 5/10게임 반환
+- seed 입력 없이도 즉시 결과 생성
 
 ## 프로젝트 구조
 
 ```text
-history.csv
-recommend.py
-backtest.py
+.github/workflows/
+  lotto-history-update.yml
+
+assets/
+  recommend-worker.js
+
+scripts/
+  update_history_csv.py
+  build_frontend_model.py
+  export_vercel_index.sh
+
 src/lottogogo/
   data/
   engine/
@@ -35,10 +47,16 @@ src/lottogogo/
     api.py
     service.py
     static/index.html
-tests/unit/
+
+data/
+  model.json
+
+history.csv
+index.html
+vercel.json
 ```
 
-## 빠른 시작
+## 빠른 시작 (로컬)
 
 ### 1) 의존성 설치
 
@@ -52,191 +70,98 @@ uv sync
 uv run pytest -q
 ```
 
-### 3) 서버 실행
-
-```bash
-DONATE_URL='https://buymeacoffee.com/lottogogo' \
-uv run uvicorn lottogogo.mvp.api:app --app-dir src --host 0.0.0.0 --port 8000 --reload
-```
-
-브라우저에서 `http://127.0.0.1:8000` 접속.
-
-## 환경변수
-
-`.env.example`를 참고해 `.env`를 만들고, 실제 배포 환경(Render)에서는 환경변수로 주입하세요.
-
-- `DONATE_URL` : 후원 버튼 링크
-- `BACKEND_URL` : 프론트에서 호출할 API 베이스 URL (비우면 same-origin)
-- `PUBLIC_BASE_URL` : canonical/robots/sitemap 생성에 사용할 공개 URL
-- `SEO_TITLE` : 페이지 `<title>` 커스텀
-- `SEO_DESCRIPTION` : 페이지 meta description 커스텀
-- `OG_IMAGE_URL` : Open Graph 이미지 URL
-- `TWITTER_IMAGE_URL` : Twitter 이미지 URL (비우면 `OG_IMAGE_URL` 사용)
-- `GOOGLE_SITE_VERIFICATION` : Google Search Console 인증값
-- `NAVER_SITE_VERIFICATION` : 네이버 서치어드바이저 인증값
-- `LOTTO_HISTORY_CSV` : 기본 `history.csv` 대신 사용할 CSV 경로
-- `CORS_ALLOW_ORIGINS` : CORS 허용 origin 목록(쉼표 구분, 기본 `*`)
-- `WARMUP_TOKEN` : `/api/warmup`, `/api/pool-status` 보호 토큰 (선택)
-- `RECOMMEND_POOL_TARGET` : 프리셋/게임 버킷별 목표 풀 개수 (기본 `4`)
-- `RECOMMEND_POOL_MAX` : 프리셋/게임 버킷별 최대 풀 개수 (기본 `8`)
-- `RECOMMEND_BOOTSTRAP_SAMPLE_SIZE` : 풀이 비었을 때 즉시응답용 bootstrap 샘플 수 (기본 `6000`)
-
-## API 예시
-
-### Request
-
-```bash
-curl -X POST 'http://127.0.0.1:8000/api/recommend' \
-  -H 'content-type: application/json' \
-  -d '{"preset":"A","games":5}'
-```
-
-### Response (shape)
-
-```json
-{
-  "meta": {
-    "preset": "A",
-    "percentile": 12
-  },
-  "recommendations": [
-    {
-      "numbers": [1, 2, 3, 4, 5, 6],
-      "score": 0.123,
-      "tags": ["hmm_hot"],
-      "reasons": ["AC>=7", "sum 100-175", "zone<=3"]
-    }
-  ]
-}
-```
-
-## 운영 체크리스트 (주간)
-
-1. `history.csv` 최신 회차 반영
-2. 커밋/푸시
-3. Render 재배포(또는 자동 배포 확인)
-4. 배포 URL에서 추천 버튼/후원 버튼 동작 확인
-
-## 주간 당첨번호 자동 갱신 (GitHub Actions)
-
-`/.github/workflows/lotto-history-update.yml` 이 매주 토요일(KST 저녁 시간대, 3회 재시도) 자동 실행됩니다.
-
-- 실행 스크립트: `scripts/update_history_csv.py`
-- 동작 원칙:
-  - `history.csv`의 마지막 회차를 읽음
-  - `마지막 회차 + 1`부터 최신 회차까지만 조회
-  - 신규 회차가 있을 때만 `history.csv`에 append 후 커밋/푸시
-  - 신규 회차가 없으면 아무것도 커밋하지 않음
-- 안전장치:
-  - 기본값으로 `history.csv`가 없거나 비어 있으면 실패 처리
-  - 즉, 실수로 `1회부터 전체 재수집`이 돌지 않음
-
-수동 실행(로컬):
+### 3) 데이터 업데이트 (증분)
 
 ```bash
 uv run python scripts/update_history_csv.py --csv history.csv --workers 8
 ```
 
-초기 부트스트랩이 필요할 때만 아래처럼 명시적으로 허용:
+- 기본 동작: 마지막 회차 다음부터만 조회
+- `history.csv`가 없거나 비정상일 때 전체 부트스트랩을 자동으로 하지 않음
+
+### 4) 프론트 모델 생성
 
 ```bash
-uv run python scripts/update_history_csv.py --csv history.csv --allow-bootstrap
+uv run python scripts/build_frontend_model.py --history-csv history.csv --output data/model.json
 ```
 
-## 추천 풀 동작 구조 (중요)
-
-현재 추천 API는 `10만 샘플` 계산을 유지하면서, 지연을 줄이기 위해 **pre-generated pool**을 함께 사용합니다.
-
-- 버킷 4개:
-  - `A_5`, `A_10`, `B_5`, `B_10`
-- 버킷별 목표 개수:
-  - `RECOMMEND_POOL_TARGET` 값
-- 이론상 총 풀 개수:
-  - `RECOMMEND_POOL_TARGET * 30` (각 버킷의 5/10 추천 세트 합)
-
-핵심:
-
-- 풀 조회는 **소모(pop)** 가 아니라 **회전 조회(round-robin)** 입니다.
-- 같은 세트를 여러 유저가 보게 될 수 있습니다(의도된 동작).
-- API 호환성을 위해 `seed` 필드는 남겨두지만, 현재는 무시됩니다.
-- 풀이 완전히 비어 있어도 bootstrap 경로로 즉시 결과를 반환하고 백그라운드에서 풀을 채웁니다.
-
-상태 확인:
-
-- `GET /api/pool-status` (토큰 설정 시 `x-warmup-token` 필요)
-
-## Render 배포
-
-- Build Command:
-
-```bash
-pip install .
-```
-
-- Start Command:
-
-```bash
-uvicorn lottogogo.mvp.api:app --app-dir src --host 0.0.0.0 --port $PORT
-```
-
-- 필수 환경변수:
-  - `DONATE_URL`
-
-## Vercel + Render 분리 배포 (권장)
-
-- 목적:
-  - 프론트는 Vercel 정적 배포로 즉시 로드
-  - 백엔드는 Render 유지
-
-- 이 저장소에서 사용하는 파일:
-  - `index.html` : Vercel이 바로 서빙할 정적 프론트
-  - `api/recommend.js` : Vercel 서버리스 프록시 (`/api/recommend` -> Render)
-  - `api/robots.js`, `api/sitemap.js` : 도메인 기준 robots/sitemap 동적 생성
-  - `vercel.json` : `/robots.txt`, `/sitemap.xml` 라우팅
-  - `scripts/export_vercel_index.sh` : 템플릿(`src/lottogogo/mvp/static/index.html`)을 Vercel용 `index.html`로 변환
-
-- 프론트 템플릿 변경 후 동기화:
+### 5) Vercel용 정적 index 내보내기
 
 ```bash
 ./scripts/export_vercel_index.sh
 ```
 
-- Vercel 프로젝트 환경변수:
-  - `RENDER_BACKEND_URL=https://<your-render-service>.onrender.com`
-  - (선택) `RENDER_WARMUP_TOKEN=<임의의긴토큰>`
+## GitHub Actions (주간 자동 갱신)
 
-- Render 프로젝트 환경변수:
-  - (선택) `WARMUP_TOKEN=<Vercel의 RENDER_WARMUP_TOKEN 과 동일한 값>`
-  - (권장) `RECOMMEND_POOL_TARGET=8`
-  - (권장) `RECOMMEND_POOL_MAX=16`
-  - (선택) `RECOMMEND_BOOTSTRAP_SAMPLE_SIZE=6000`
+워크플로: `.github/workflows/lotto-history-update.yml`
 
-- 동작 방식:
-  - 브라우저는 Vercel 도메인의 `/api/recommend`를 호출
-  - Vercel 함수가 Render API로 프록시 호출
-  - Render가 슬립 상태면 첫 요청이 느릴 수 있고, UI에 안내 패널이 자동 표시됨
-  - Render `/api/warmup`는 비동기로 추천 풀(pre-generated sets)을 채움
-  - GitHub Actions(`render-keepalive`)는 10분마다 `/api/warmup`를 호출
-  - FastAPI 프로세스가 시작될 때도 1회 자동 warmup을 시작
+스케줄:
+- 매주 토요일(KST 저녁) 3회 재시도 창
 
-## SEO 점검 포인트
+동작:
+1. `history.csv` 증분 업데이트
+2. `data/model.json` 재생성 (preset별 100k)
+3. 두 파일 중 변경이 있을 때만 커밋
 
-- `GET /robots.txt` 노출
-- `GET /sitemap.xml` 노출
-- 메타 태그/OG/JSON-LD(구조화 데이터) 기본 포함
-- Search Console 등록 시:
-  - Google: `GOOGLE_SITE_VERIFICATION` 설정
-  - Naver: `NAVER_SITE_VERIFICATION` 설정
+커밋 없음(no-op) 조건:
+- 신규 회차 없음
+- 모델 변화 없음
 
-## 공개 운영 가이드
+## 모델(`data/model.json`)에 들어가는 내용
 
-- 공개해도 되는 것:
-  - 엔진 구조, 필터 아이디어, 실험 방식
-- 공개하면 안 되는 것:
-  - 토큰/키/비밀번호/내부 운영 비밀값
-- 권장:
-  - `.env`는 커밋 금지, `.env.example`만 커밋
+- 최신 회차 메타
+- 번호별 raw score
+- preset A/B별:
+  - 필터 파라미터
+  - 생성 확률 가중치
+  - diversity/ranking 파라미터
+  - Monte Carlo 요약 통계
+- 히스토리 중복 방지 인덱스
+  - exact 조합
+  - 5개 부분집합 키
+
+## 프론트 동작 상세
+
+- 버튼 클릭 시 메인 스레드는 즉시 반환, 계산은 Worker에서 수행
+- Worker가 확률 샘플링 → 필터 → 점수화 → 다양성 선택
+- 최근 추천 재노출 완화:
+  - `localStorage`의 최근 키를 우선 회피
+- 결과 없을 때 fallback 경로로 무한 대기 방지
+
+## SEO
+
+- 정적 `index.html`에 다음 메타 포함:
+  - Google verification
+  - Naver verification
+  - canonical / OG / Twitter / JSON-LD
+- `robots.txt`, `sitemap.xml`은 `vercel.json` 리라이트로 `api/robots.js`, `api/sitemap.js` 제공
+
+## 환경변수
+
+`.env.example` 참고
+
+주요 항목:
+- `DONATE_URL`
+- `PUBLIC_BASE_URL`
+- `MODEL_URL`
+- `GOOGLE_SITE_VERIFICATION`
+- `NAVER_SITE_VERIFICATION`
+- `LOTTO_HISTORY_CSV`
+- `FRONTEND_MODEL_PATH`
+
+## 배포
+
+### Vercel
+
+- 이 저장소 루트를 배포 대상으로 설정
+- 정적 `index.html` + `data/model.json` + `assets/recommend-worker.js` 배포
+- GitHub push 시 자동 배포
+
+## 주의사항
+
+- 이 프로젝트는 예측 서비스가 아니라 **실험/참고 도구**입니다.
+- 실제 구매 판단과 결과 책임은 사용자에게 있습니다.
 
 ## 라이선스
 
-MIT License
+MIT

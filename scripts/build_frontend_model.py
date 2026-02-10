@@ -1,0 +1,394 @@
+#!/usr/bin/env python3
+"""Build static frontend model.json from history.csv and engine logic.
+
+This script runs weekly in GitHub Actions after history.csv incremental updates.
+It keeps model generation deterministic for the same history by using a stable seed.
+"""
+
+from __future__ import annotations
+
+import argparse
+from collections import Counter
+from datetime import datetime, timezone
+from itertools import combinations
+import json
+from pathlib import Path
+import sys
+
+import numpy as np
+import pandas as pd
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from lottogogo.data.loader import LottoHistoryLoader
+from lottogogo.engine.filters import (
+    ACFilter,
+    FilterPipeline,
+    HighLowFilter,
+    HistoryFilter,
+    OddEvenFilter,
+    SumFilter,
+    TailFilter,
+    ZoneFilter,
+)
+from lottogogo.engine.ranker import CombinationRanker
+from lottogogo.engine.sampler import MonteCarloSampler
+from lottogogo.engine.score import (
+    BaseScoreCalculator,
+    BoostCalculator,
+    PenaltyCalculator,
+    ProbabilityNormalizer,
+    ScoreEnsembler,
+)
+from lottogogo.engine.score.hmm_scorer import HMMScorer
+from lottogogo.mvp.service import (
+    NUMBER_COLS,
+    PRESET_CONFIGS,
+    RARE_PAIR_COMBINATIONS,
+    PresetConfig,
+    contains_rare_pair,
+    exceeds_carryover_limit,
+)
+
+TAG_LABELS = {
+    "hmm_hot": "AI 흐름 강세",
+    "hot": "최근 빈도 상승",
+    "carryover": "직전 회차 연결",
+    "carryover2": "최근 흐름 연장",
+    "neighbor": "인접 패턴 확장",
+    "reverse": "반전 대칭 후보",
+    "hmm_cold": "잠복 구간 반등",
+    "cold": "저출현 반등",
+}
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Build frontend model JSON from lotto history.")
+    parser.add_argument("--history-csv", default="history.csv", help="Input history CSV path.")
+    parser.add_argument("--output", default="data/model.json", help="Output model JSON path.")
+    parser.add_argument("--chunk-size", type=int, default=20_000, help="Monte Carlo sampler chunk size.")
+    parser.add_argument(
+        "--base-weight",
+        type=float,
+        default=0.65,
+        help="Blend weight for base probabilities vs filtered-frequency probabilities.",
+    )
+    parser.add_argument(
+        "--sample-size-override",
+        type=int,
+        default=None,
+        help="Optional override for Monte Carlo sample size (debug only).",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Optional base seed. If omitted, derived from latest round.",
+    )
+    return parser.parse_args()
+
+
+def normalize_distribution(values: dict[int, float]) -> dict[int, float]:
+    total = float(sum(max(0.0, float(value)) for value in values.values()))
+    if total <= 0:
+        uniform = 1.0 / 45.0
+        return {number: uniform for number in range(1, 46)}
+    return {number: max(0.0, float(values.get(number, 0.0))) / total for number in range(1, 46)}
+
+
+def combo_key(numbers: tuple[int, ...] | list[int]) -> str:
+    return "-".join(str(int(value)) for value in numbers)
+
+
+def build_scores(history: pd.DataFrame) -> tuple[dict[int, float], dict[int, list[str]], set[int]]:
+    base_scores = BaseScoreCalculator(prior_alpha=1.0, prior_beta=1.0).calculate_scores(history, recent_n=50)
+
+    booster = BoostCalculator(hot_threshold=2, hot_window=5, cold_window=10)
+    boosts, boost_tags = booster.calculate_boosts(history)
+
+    penalties = PenaltyCalculator(poisson_window=20, poisson_lambda=0.0, markov_lambda=0.0).calculate_penalties(history)
+
+    hmm_boosts, hmm_tags = HMMScorer(hot_boost=0.3, cold_boost=0.15, window=100).calculate_boosts(history)
+
+    combined_boosts = {number: boosts.get(number, 0.0) + hmm_boosts.get(number, 0.0) for number in range(1, 46)}
+    for number, tags in hmm_tags.items():
+        if tags:
+            merged = boost_tags.setdefault(number, [])
+            merged.extend(tags)
+
+    raw_scores = ScoreEnsembler(minimum_score=0.0).combine(base_scores, combined_boosts, penalties)
+
+    deduped_tags: dict[int, list[str]] = {}
+    for number in range(1, 46):
+        deduped_tags[number] = sorted(set(boost_tags.get(number, [])))
+
+    carryover_numbers = {
+        number
+        for number in range(1, 46)
+        if "carryover" in deduped_tags.get(number, []) or "carryover2" in deduped_tags.get(number, [])
+    }
+
+    return raw_scores, deduped_tags, carryover_numbers
+
+
+def apply_filters(
+    combinations_in: list[tuple[int, ...]],
+    historical_draws: list[tuple[int, ...]],
+    carryover_numbers: set[int],
+    config: PresetConfig,
+) -> list[tuple[int, ...]]:
+    pipeline = FilterPipeline(
+        [
+            SumFilter(min_sum=config.min_sum, max_sum=config.max_sum),
+            ACFilter(min_ac=config.min_ac),
+            ZoneFilter(max_per_zone=config.max_per_zone),
+            TailFilter(max_same_tail=config.max_same_tail),
+            OddEvenFilter(min_odd=config.min_odd, max_odd=config.max_odd),
+            HighLowFilter(min_high=config.min_high, max_high=config.max_high),
+            HistoryFilter(historical_draws=historical_draws, match_threshold=5),
+        ]
+    )
+
+    base_filtered = pipeline.filter_combinations(combinations_in)
+    result: list[tuple[int, ...]] = []
+
+    for combination in base_filtered:
+        if config.rare_pair_filter and contains_rare_pair(combination):
+            continue
+
+        if config.excluded_numbers and set(combination).intersection(config.excluded_numbers):
+            continue
+
+        if config.max_carryover_in_combo is not None and exceeds_carryover_limit(
+            combination,
+            carryover_numbers,
+            config.max_carryover_in_combo,
+        ):
+            continue
+
+        result.append(combination)
+
+    return result
+
+
+def build_reasons(config: PresetConfig) -> list[str]:
+    reasons = [
+        f"AC>={config.min_ac}",
+        f"sum {config.min_sum}-{config.max_sum}",
+        f"zone<={config.max_per_zone}",
+        f"odd {config.min_odd}-{config.max_odd}",
+        f"high {config.min_high}-{config.max_high}",
+        "history overlap < 5",
+    ]
+    if config.max_carryover_in_combo is not None:
+        reasons.append(f"carryover<={config.max_carryover_in_combo}")
+    return reasons
+
+
+def quantiles_from_scores(scores: np.ndarray) -> dict[str, float]:
+    if scores.size == 0:
+        return {"p10": 0.0, "p25": 0.0, "p50": 0.0, "p75": 0.0, "p90": 0.0}
+
+    points = np.quantile(scores, [0.10, 0.25, 0.50, 0.75, 0.90])
+    return {
+        "p10": float(points[0]),
+        "p25": float(points[1]),
+        "p50": float(points[2]),
+        "p75": float(points[3]),
+        "p90": float(points[4]),
+    }
+
+
+def build_history_index(draws: list[tuple[int, ...]]) -> tuple[list[str], list[str]]:
+    exact = sorted({combo_key(draw) for draw in draws})
+
+    subsets: set[str] = set()
+    for draw in draws:
+        for subset in combinations(draw, 5):
+            subsets.add(combo_key(subset))
+
+    return exact, sorted(subsets)
+
+
+def preset_seed(base_seed: int, preset_name: str) -> int:
+    offset = 11 if preset_name == "A" else 29
+    return base_seed * 131 + offset
+
+
+def main() -> int:
+    args = parse_args()
+
+    if args.chunk_size <= 0:
+        raise SystemExit("--chunk-size must be > 0")
+    if not (0.0 <= args.base_weight <= 1.0):
+        raise SystemExit("--base-weight must be between 0 and 1")
+    if args.sample_size_override is not None and args.sample_size_override <= 0:
+        raise SystemExit("--sample-size-override must be > 0")
+
+    history_path = Path(args.history_csv)
+    if not history_path.exists():
+        raise SystemExit(f"history csv not found: {history_path}")
+
+    loader = LottoHistoryLoader()
+    history = loader.load_and_validate(history_path).reset_index(drop=True)
+    if history.empty:
+        raise SystemExit("history csv is empty")
+
+    historical_draws = [tuple(int(row[column]) for column in NUMBER_COLS) for _, row in history.iterrows()]
+    latest_round = int(history["round"].max())
+    base_seed = int(args.seed) if args.seed is not None else latest_round
+
+    raw_scores, boost_tags, carryover_numbers = build_scores(history)
+
+    model_presets: dict[str, dict[str, object]] = {}
+
+    for preset_name, config in PRESET_CONFIGS.items():
+        sample_size = args.sample_size_override or config.sample_size
+
+        base_prob_map = ProbabilityNormalizer.to_sampling_probabilities(
+            raw_scores,
+            temperature=config.temperature,
+            min_prob_floor=config.min_prob_floor,
+        )
+        base_prob_map = normalize_distribution(base_prob_map)
+
+        sampler = MonteCarloSampler(sample_size=sample_size, chunk_size=args.chunk_size)
+        seed = preset_seed(base_seed, preset_name)
+
+        sampled = sampler.sample(base_prob_map, seed=seed)
+        filtered = apply_filters(sampled, historical_draws, carryover_numbers, config)
+        if not filtered:
+            filtered = [tuple(sorted(int(value) for value in combo)) for combo in sampled]
+
+        number_counts = Counter(number for combo in filtered for number in combo)
+        total_hits = sum(number_counts.values())
+        if total_hits <= 0:
+            filtered_prob_map = {number: 1.0 / 45.0 for number in range(1, 46)}
+        else:
+            filtered_prob_map = {number: number_counts.get(number, 0) / total_hits for number in range(1, 46)}
+
+        blended_prob_map = {
+            number: args.base_weight * base_prob_map.get(number, 0.0)
+            + (1.0 - args.base_weight) * filtered_prob_map.get(number, 0.0)
+            for number in range(1, 46)
+        }
+        blended_prob_map = normalize_distribution(blended_prob_map)
+
+        score_values = np.array(
+            [sum(raw_scores.get(number, 0.0) for number in combo) for combo in filtered],
+            dtype=np.float64,
+        )
+        score_q = quantiles_from_scores(score_values)
+
+        acceptance_rate = float(len(filtered)) / float(sample_size)
+        estimated_attempts = int(max(8_000, min(60_000, round((max(config.top_k * 3, 800) / max(acceptance_rate, 0.02))))))
+
+        top_numbers = [
+            number
+            for number, _ in sorted(
+                ((number, blended_prob_map[number]) for number in range(1, 46)),
+                key=lambda item: item[1],
+                reverse=True,
+            )[:12]
+        ]
+
+        model_presets[preset_name] = {
+            "filters": {
+                "min_sum": config.min_sum,
+                "max_sum": config.max_sum,
+                "min_ac": config.min_ac,
+                "max_per_zone": config.max_per_zone,
+                "max_same_tail": config.max_same_tail,
+                "min_odd": config.min_odd,
+                "max_odd": config.max_odd,
+                "min_high": config.min_high,
+                "max_high": config.max_high,
+                "history_match_threshold": 5,
+            },
+            "special": {
+                "rare_pair_filter": config.rare_pair_filter,
+                "excluded_numbers": sorted(int(value) for value in config.excluded_numbers),
+                "max_carryover_in_combo": config.max_carryover_in_combo,
+            },
+            "ranking": {
+                "top_k": config.top_k,
+                "max_overlap": config.max_overlap,
+                "percentile_bias": config.percentile_bias,
+            },
+            "sampling": {
+                "sample_size": int(sample_size),
+                "chunk_size": int(args.chunk_size),
+                "max_attempts": estimated_attempts,
+                "blend_base_weight": float(args.base_weight),
+                "weights": [float(blended_prob_map[number]) for number in range(1, 46)],
+                "base_probabilities": [float(base_prob_map[number]) for number in range(1, 46)],
+            },
+            "reasons": build_reasons(config),
+            "monte_carlo": {
+                "seed": seed,
+                "sampled_count": int(sample_size),
+                "filtered_count": len(filtered),
+                "acceptance_rate": round(acceptance_rate, 6),
+                "score_quantiles": {k: round(v, 6) for k, v in score_q.items()},
+                "top_numbers": top_numbers,
+            },
+        }
+
+    exact_keys, five_subset_keys = build_history_index(historical_draws)
+
+    model = {
+        "schema_version": 1,
+        "generated_at_utc": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "source": {
+            "history_csv": str(history_path.as_posix()),
+            "rows": int(len(history)),
+            "latest_round": latest_round,
+        },
+        "tag_labels": TAG_LABELS,
+        "numbers": list(range(1, 46)),
+        "raw_scores": [float(raw_scores.get(number, 0.0)) for number in range(1, 46)],
+        "boost_tags_by_number": [boost_tags.get(number, []) for number in range(1, 46)],
+        "signals": {
+            "hot_numbers": [number for number in range(1, 46) if "hot" in boost_tags.get(number, [])],
+            "cold_numbers": [number for number in range(1, 46) if "cold" in boost_tags.get(number, [])],
+            "hmm_hot_numbers": [number for number in range(1, 46) if "hmm_hot" in boost_tags.get(number, [])],
+            "hmm_cold_numbers": [number for number in range(1, 46) if "hmm_cold" in boost_tags.get(number, [])],
+        },
+        "carryover_numbers": sorted(carryover_numbers),
+        "rare_pairs": [[left, right] for left, right in sorted(RARE_PAIR_COMBINATIONS)],
+        "history": {
+            "draws": [list(draw) for draw in historical_draws],
+            "exact_keys": exact_keys,
+            "five_subset_keys": five_subset_keys,
+            "match_threshold": 5,
+        },
+        "presets": model_presets,
+    }
+
+    output_path = Path(args.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(model, ensure_ascii=False, separators=(",", ":"), sort_keys=True),
+        encoding="utf-8",
+    )
+
+    print(f"history rows      : {len(history)}")
+    print(f"latest round      : {latest_round}")
+    print(f"model output      : {output_path}")
+    print(f"history exact keys: {len(exact_keys)}")
+    print(f"history 5-subsets : {len(five_subset_keys)}")
+    for preset_name, preset_data in model_presets.items():
+        mc = preset_data["monte_carlo"]
+        print(
+            f"preset {preset_name} -> sampled={mc['sampled_count']} "
+            f"filtered={mc['filtered_count']} acceptance={mc['acceptance_rate']}"
+        )
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

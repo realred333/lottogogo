@@ -13,14 +13,6 @@
       name="robots"
       content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
     />
-    <meta
-      name="google-site-verification"
-      content="PbH0mni_SrDNFhpznnlQNcklvSnXtGVP9GhOhedijYQ"
-    />
-    <meta
-      name="naver-site-verification"
-      content="bfd8bd236fd5f7ac42c026fbb28dfd437612f0fd"
-    />
     <meta name="author" content="LottoGoGo" />
     <link rel="canonical" href="https://lottogogo.vercel.app/" />
     <link rel="sitemap" type="application/xml" title="Sitemap" href="https://lottogogo.vercel.app/sitemap.xml" />
@@ -34,12 +26,11 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="LottoGoGo | 로또 확률 실험 기반 선택 보조 도구" />
     <meta name="twitter:description" content="로또 번호 선택을 위한 확률 실험 기반 보조 도구입니다. 당첨을 보장하지 않으며 통계 필터로 무근거 선택을 줄입니다." />
-    <meta name="twitter:url" content="https://lottogogo.vercel.app/" />
     
-    
-    
+    <meta name="google-site-verification" content="PbH0mni_SrDNFhpznnlQNcklvSnXtGVP9GhOhedijYQ" />
+    <meta name="naver-site-verification" content="bfd8bd236fd5f7ac42c026fbb28dfd437612f0fd" />
     <script type="application/ld+json">
-      {"@context":"https://schema.org","@type":"WebSite","name":"LottoGoGo","url":"https://lottogogo.vercel.app/"}
+      {"@context":"https://schema.org","@type":"WebSite","name":"LottoGoGo","url":"https://lottogogo.vercel.app/","inLanguage":"ko-KR","description":"로또 번호 선택을 위한 확률 실험 기반 보조 도구입니다. 당첨을 보장하지 않으며 통계 필터로 무근거 선택을 줄입니다."}
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -532,94 +523,6 @@
         font-weight: 600;
       }
 
-      .warmup-panel {
-        margin-top: 0.65rem;
-        border-radius: 14px;
-        border: 1px solid rgba(65, 243, 198, 0.4);
-        background: linear-gradient(145deg, rgba(12, 21, 34, 0.92), rgba(8, 14, 26, 0.86));
-        padding: 0.72rem 0.76rem;
-      }
-
-      .warmup-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.6rem;
-      }
-
-      .warmup-title {
-        margin: 0;
-        font-size: 0.86rem;
-        font-weight: 800;
-        color: #d5fff3;
-      }
-
-      .warmup-time {
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.24);
-        background: rgba(255, 255, 255, 0.08);
-        color: #f5f8ff;
-        font-family: "Outfit", sans-serif;
-        font-size: 0.76rem;
-        font-weight: 700;
-        padding: 0.16rem 0.52rem;
-      }
-
-      .warmup-grid {
-        margin-top: 0.52rem;
-        display: grid;
-        gap: 0.62rem;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      }
-
-      .warmup-list {
-        margin: 0;
-        padding-left: 1rem;
-        display: grid;
-        gap: 0.32rem;
-        color: #c8d5ee;
-        font-size: 0.8rem;
-        line-height: 1.46;
-      }
-
-      .warmup-card {
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        background: rgba(255, 255, 255, 0.05);
-        padding: 0.56rem 0.62rem;
-      }
-
-      .warmup-card-title {
-        margin: 0;
-        color: #a4fce6;
-        font-size: 0.76rem;
-        font-weight: 800;
-      }
-
-      .warmup-tip {
-        margin: 0.32rem 0 0;
-        color: #edf5ff;
-        font-size: 0.82rem;
-        font-weight: 600;
-        line-height: 1.42;
-      }
-
-      .warmup-link {
-        margin-top: 0.46rem;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.2rem;
-        color: #9effe2;
-        font-size: 0.78rem;
-        font-weight: 700;
-        text-decoration: none;
-      }
-
-      .warmup-link:hover {
-        color: #dbfff4;
-        text-decoration: underline;
-      }
-
       .results {
         margin-top: 1rem;
         padding: 1.1rem;
@@ -862,10 +765,6 @@
           grid-template-columns: 1fr;
         }
 
-        .warmup-grid {
-          grid-template-columns: 1fr;
-        }
-
         .hero {
           border-radius: 22px;
         }
@@ -952,24 +851,6 @@
         </div>
 
         <div id="status" class="status"></div>
-        <aside id="warmup-panel" class="warmup-panel" hidden aria-live="polite">
-          <div class="warmup-head">
-            <p class="warmup-title">백엔드 깨우는 중일 수 있어요</p>
-            <span id="warmup-elapsed" class="warmup-time">0초</span>
-          </div>
-          <div class="warmup-grid">
-            <ul class="warmup-list">
-              <li>Render 무료 플랜은 유휴 후 첫 요청에서 10~40초 정도 걸릴 수 있어요.</li>
-              <li>화면은 이미 로드되었고, 지금은 추천 계산 API만 준비 중입니다.</li>
-              <li>준비가 끝나면 결과 카드가 실제 데이터로 자동 갱신됩니다.</li>
-            </ul>
-            <div class="warmup-card">
-              <p class="warmup-card-title">기다리는 동안 보기</p>
-              <p id="warmup-tip" class="warmup-tip"></p>
-              <a href="#notice" class="warmup-link">운영 원칙/면책 다시 보기 →</a>
-            </div>
-          </div>
-        </aside>
       </section>
 
       <section class="panel results" id="results">
@@ -1005,26 +886,10 @@
         games: 5,
       };
 
-      const BACKEND_URL = "".trim().replace(/\/$/, "");
-      const RECOMMEND_ENDPOINT = BACKEND_URL ? `${BACKEND_URL}/api/recommend` : "/api/recommend";
-
-      const DUMMY_RESULT = {
-        meta: { preset: "A", percentile: 18 },
-        recommendations: [
-          {
-            numbers: [3, 11, 19, 24, 37, 42],
-            score: 8.9231,
-            tags: ["hmm_hot", "neighbor"],
-            reasons: ["AC>=7", "sum 100-175", "zone<=3"],
-          },
-          {
-            numbers: [5, 14, 22, 29, 33, 41],
-            score: 8.4412,
-            tags: ["carryover2", "hot"],
-            reasons: ["odd 2-4", "high 2-4", "history overlap < 5"],
-          },
-        ],
-      };
+      const MODEL_URL = "/data/model.json";
+      const WORKER_URL = "/assets/recommend-worker.js";
+      const RECENT_STORAGE_KEY = "lottogogo_recent_combos_v1";
+      const RECENT_STORAGE_LIMIT = 120;
 
       const TAG_LABELS = {
         hmm_hot: "AI 흐름 강세",
@@ -1035,22 +900,7 @@
         reverse: "반전 대칭 후보",
         hmm_cold: "잠복 구간 반등",
         cold: "저출현 반등",
-      };
-
-      const WARMUP_HINT_DELAY_MS = 1700;
-      const WARMUP_TIPS = [
-        "Preset A는 변동성을 줄이는 보수형이고, B는 변동 구간 탐색 비중이 더 큽니다.",
-        "추천지수는 상대지표입니다. 같은 실행 안에서 상위 조합을 고르는 용도로 봐주세요.",
-        "재시도 버튼은 풀에서 다음 후보를 회전 조회합니다.",
-        "후보 5개보다 10개를 먼저 보고, 그중 기준에 맞는 조합을 추리는 방법이 안정적입니다.",
-      ];
-
-      const warmupState = {
-        startedAtMs: 0,
-        tipIndex: 0,
-        revealTimerId: null,
-        tickTimerId: null,
-        tipTimerId: null,
+        pattern: "데이터 패턴 통과",
       };
 
       const elements = {
@@ -1062,15 +912,18 @@
         runText: document.getElementById("run-text"),
         retryBtn: document.getElementById("retry-btn"),
         status: document.getElementById("status"),
-        warmupPanel: document.getElementById("warmup-panel"),
-        warmupElapsed: document.getElementById("warmup-elapsed"),
-        warmupTip: document.getElementById("warmup-tip"),
         badge: document.getElementById("percentile-badge"),
         resultCount: document.getElementById("result-count"),
         resultInsight: document.getElementById("result-insight"),
         resultEmpty: document.getElementById("result-empty"),
         resultCards: document.getElementById("result-cards"),
       };
+
+      let engineWorker = null;
+      let workerReady = false;
+      let modelPromise = null;
+      let requestSeq = 0;
+      const pendingRequests = new Map();
 
       elements.startBtn.addEventListener("click", () => {
         document.getElementById("generate").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1101,83 +954,170 @@
       elements.runBtn.addEventListener("click", () => requestRecommend());
       elements.retryBtn.addEventListener("click", () => requestRecommend());
 
-      // Keep first render usable even before API is connected.
-      renderResult(DUMMY_RESULT);
+      setStatus("모델 준비 중입니다...");
+      bootstrapEngine();
 
-      async function requestRecommend() {
-        const payload = {
-          preset: state.preset,
-          games: state.games,
-        };
-
-        setLoading(true);
-        setStatus("추천 요청을 보냈습니다. 결과를 받아오는 중입니다.");
-
+      async function bootstrapEngine() {
         try {
-          const response = await fetch(RECOMMEND_ENDPOINT, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-
-          const { data, text, isJson } = await readApiResponse(response);
-          if (!response.ok) {
-            const detail =
-              typeof data?.detail === "string" && data.detail.trim() !== ""
-                ? data.detail.trim()
-                : summarizeErrorText(text) || `서버 응답 오류 (${response.status})`;
-            throw new Error(detail);
-          }
-
-          if (!isJson || !data || !Array.isArray(data.recommendations)) {
-            const hint = summarizeErrorText(text);
-            throw new Error(
-              hint
-                ? `서버 응답 형식이 올바르지 않습니다: ${hint}`
-                : "서버 응답 형식이 올바르지 않습니다. 잠시 후 다시 시도해주세요."
-            );
-          }
-
-          renderResult(data);
-          setStatus("추천 결과를 갱신했습니다.");
+          await ensureWorkerReady();
+          setStatus("준비 완료. 추천 버튼을 누르면 즉시 생성합니다.");
         } catch (error) {
           setStatus(
             error instanceof Error
-              ? `지금은 결과를 불러오지 못했습니다(서버/CSV 경로 확인): ${error.message}`
-              : "지금은 결과를 불러오지 못했습니다(서버/CSV 경로 확인)"
+              ? `모델 초기화 실패: ${error.message}`
+              : "모델 초기화 실패"
+          );
+        }
+      }
+
+      async function requestRecommend() {
+        setLoading(true);
+        setStatus("조합 생성 중입니다...");
+
+        try {
+          await ensureWorkerReady();
+          const result = await generateWithWorker({
+            preset: state.preset,
+            games: state.games,
+            recentKeys: readRecentKeys(),
+          });
+          renderResult(result);
+          saveRecentKeysFromResult(result);
+          const attempts = Number(result?.debug?.attempts || 0);
+          setStatus(
+            attempts > 0
+              ? `추천 결과를 갱신했습니다. (${attempts.toLocaleString("ko-KR")}회 탐색)`
+              : "추천 결과를 갱신했습니다."
+          );
+        } catch (error) {
+          setStatus(
+            error instanceof Error
+              ? `지금은 결과를 생성하지 못했습니다: ${error.message}`
+              : "지금은 결과를 생성하지 못했습니다"
           );
         } finally {
           setLoading(false);
         }
       }
 
-      async function readApiResponse(response) {
-        const text = await response.text();
-        const contentType = (response.headers.get("content-type") || "").toLowerCase();
-        const isJson = contentType.includes("application/json");
-
-        if (!text || !isJson) {
-          return { data: null, text, isJson };
+      async function ensureWorkerReady() {
+        if (workerReady && engineWorker) return;
+        if (!engineWorker) {
+          engineWorker = new Worker(WORKER_URL);
+          engineWorker.addEventListener("message", onWorkerMessage);
+          engineWorker.addEventListener("error", onWorkerError);
         }
 
+        const model = await loadModel();
+        const initResult = await sendWorkerRequest("init", { model }, 12000);
+        if (!initResult || initResult.type !== "inited") {
+          throw new Error("worker initialization failed");
+        }
+        workerReady = true;
+      }
+
+      function onWorkerMessage(event) {
+        const message = event.data || {};
+        const requestId = message.requestId;
+        if (!requestId) return;
+
+        const pending = pendingRequests.get(requestId);
+        if (!pending) return;
+
+        pendingRequests.delete(requestId);
+        window.clearTimeout(pending.timerId);
+
+        if (message.type === "error") {
+          pending.reject(new Error(message.message || "worker error"));
+          return;
+        }
+
+        pending.resolve(message);
+      }
+
+      function onWorkerError(event) {
+        for (const pending of pendingRequests.values()) {
+          window.clearTimeout(pending.timerId);
+          pending.reject(new Error(event?.message || "worker crashed"));
+        }
+        pendingRequests.clear();
+      }
+
+      async function generateWithWorker(payload) {
+        const message = await sendWorkerRequest("generate", payload, 20000);
+        if (message.type !== "result" || !message.payload) {
+          throw new Error("worker result payload is invalid");
+        }
+        return message.payload;
+      }
+
+      function sendWorkerRequest(type, payload, timeoutMs) {
+        if (!engineWorker) {
+          return Promise.reject(new Error("worker not ready"));
+        }
+
+        const requestId = `${type}-${Date.now()}-${requestSeq++}`;
+        return new Promise((resolve, reject) => {
+          const timerId = window.setTimeout(() => {
+            pendingRequests.delete(requestId);
+            reject(new Error("요청 시간이 초과되었습니다. 다시 시도해주세요."));
+          }, timeoutMs);
+
+          pendingRequests.set(requestId, { resolve, reject, timerId });
+          engineWorker.postMessage({ type, requestId, ...payload });
+        });
+      }
+
+      async function loadModel() {
+        if (modelPromise) return modelPromise;
+
+        modelPromise = fetch(MODEL_URL, { cache: "no-store" }).then(async (response) => {
+          if (!response.ok) {
+            throw new Error(`model.json 로드 실패 (${response.status})`);
+          }
+
+          const parsed = await response.json();
+          if (!parsed || typeof parsed !== "object" || !parsed.presets) {
+            throw new Error("model.json 형식이 올바르지 않습니다.");
+          }
+          return parsed;
+        });
+
+        return modelPromise;
+      }
+
+      function readRecentKeys() {
         try {
-          return { data: JSON.parse(text), text, isJson };
+          const raw = window.localStorage.getItem(RECENT_STORAGE_KEY);
+          if (!raw) return [];
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed)) return [];
+          return parsed.map((value) => String(value)).slice(0, RECENT_STORAGE_LIMIT);
         } catch (_error) {
-          return { data: null, text, isJson };
+          return [];
         }
       }
 
-      function summarizeErrorText(text) {
-        if (typeof text !== "string") return "";
+      function saveRecentKeysFromResult(data) {
+        const rows = Array.isArray(data?.recommendations) ? data.recommendations : [];
+        if (!rows.length) return;
 
-        const trimmed = text.trim();
-        if (!trimmed) return "";
+        const existing = readRecentKeys();
+        const merged = [...existing];
 
-        if (/^<!doctype html/i.test(trimmed) || /^<html/i.test(trimmed)) {
-          return "백엔드가 HTML 오류 페이지를 반환했습니다. 잠시 후 다시 시도해주세요.";
+        for (const row of rows) {
+          const numbers = Array.isArray(row?.numbers) ? row.numbers.map((value) => Number(value)) : [];
+          if (numbers.length !== 6 || numbers.some((value) => !Number.isFinite(value))) continue;
+          const key = numbers.join("-");
+          merged.unshift(key);
         }
 
-        return trimmed.replace(/\s+/g, " ").slice(0, 140);
+        const unique = [...new Set(merged)].slice(0, RECENT_STORAGE_LIMIT);
+        try {
+          window.localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(unique));
+        } catch (_error) {
+          // Ignore localStorage quota errors.
+        }
       }
 
       function renderResult(data) {
@@ -1320,60 +1260,12 @@
         elements.retryBtn.disabled = loading;
 
         if (loading) {
-          startWarmupFeedback();
           elements.runIcon.innerHTML = '<span class="spinner" aria-hidden="true"></span>';
-          elements.runText.textContent = "분석 중...";
+          elements.runText.textContent = "생성 중...";
         } else {
-          stopWarmupFeedback();
           elements.runIcon.textContent = "🎲";
           elements.runText.textContent = "추천 받기";
         }
-      }
-
-      function startWarmupFeedback() {
-        stopWarmupFeedback();
-
-        warmupState.startedAtMs = Date.now();
-        warmupState.tipIndex = 0;
-        elements.warmupElapsed.textContent = "0초";
-        elements.warmupTip.textContent = WARMUP_TIPS[0];
-
-        warmupState.revealTimerId = window.setTimeout(() => {
-          elements.warmupPanel.hidden = false;
-          updateWarmupElapsed();
-          warmupState.tickTimerId = window.setInterval(updateWarmupElapsed, 1000);
-          warmupState.tipTimerId = window.setInterval(() => {
-            warmupState.tipIndex = (warmupState.tipIndex + 1) % WARMUP_TIPS.length;
-            elements.warmupTip.textContent = WARMUP_TIPS[warmupState.tipIndex];
-          }, 3200);
-
-          setStatus("서버가 잠자기 상태였다면 첫 요청은 평소보다 오래 걸릴 수 있습니다.");
-        }, WARMUP_HINT_DELAY_MS);
-      }
-
-      function stopWarmupFeedback() {
-        if (warmupState.revealTimerId !== null) {
-          window.clearTimeout(warmupState.revealTimerId);
-          warmupState.revealTimerId = null;
-        }
-
-        if (warmupState.tickTimerId !== null) {
-          window.clearInterval(warmupState.tickTimerId);
-          warmupState.tickTimerId = null;
-        }
-
-        if (warmupState.tipTimerId !== null) {
-          window.clearInterval(warmupState.tipTimerId);
-          warmupState.tipTimerId = null;
-        }
-
-        elements.warmupPanel.hidden = true;
-      }
-
-      function updateWarmupElapsed() {
-        if (!warmupState.startedAtMs) return;
-        const seconds = Math.max(0, Math.floor((Date.now() - warmupState.startedAtMs) / 1000));
-        elements.warmupElapsed.textContent = `${seconds}초`;
       }
     </script>
   </body>
