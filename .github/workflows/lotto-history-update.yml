@@ -43,11 +43,7 @@ jobs:
             exit 0
           fi
 
-          latest_round="$(python - <<'PY'
-import pandas as pd
-print(int(pd.read_csv('history.csv')['round'].max()))
-PY
-)"
+          latest_round=$(python -c "import pandas as pd; print(int(pd.read_csv('history.csv')['round'].max()))")
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
