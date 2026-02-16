@@ -902,6 +902,7 @@
       model: "ga",  // NEW: model selection
     };
 
+    const MODEL_URL = "/data/model.json";  // Legacy fallback
     const getModelURL = () => `/data/model_${state.model}.json`;
     const WORKER_URL = "/assets/recommend-worker.js";
     const RECENT_STORAGE_KEY = "lottogogo_recent_combos_v1";
@@ -966,6 +967,22 @@
       for (const button of elements.gamesSeg.querySelectorAll("button")) {
         button.classList.toggle("is-active", button === target);
       }
+    });
+
+    elements.modelSeg.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLButtonElement)) return;
+      const model = target.dataset.model;
+      if (!model) return;
+      state.model = model;
+      for (const button of elements.modelSeg.querySelectorAll("button")) {
+        button.classList.toggle("is-active", button === target);
+      }
+      // Reload model when selection changes
+      modelPromise = null;
+      workerReady = false;
+      setStatus("모델 전환 중...");
+      bootstrapEngine();
     });
 
     elements.runBtn.addEventListener("click", () => requestRecommend());
@@ -1088,7 +1105,7 @@
     async function loadModel() {
       if (modelPromise) return modelPromise;
 
-      modelPromise = fetch(MODEL_URL, { cache: "no-store" }).then(async (response) => {
+      modelPromise = fetch(getModelURL(), { cache: "no-store" }).then(async (response) => {
         if (!response.ok) {
           throw new Error(`model.json 로드 실패 (${response.status})`);
         }
