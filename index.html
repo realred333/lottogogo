@@ -812,13 +812,14 @@
           <div id="percentile-badge" class="quick-badge" hidden></div>
         </div>
 
-        <div class="draw" aria-hidden="true">
-          <div class="ball a">7</div>
-          <div class="ball b">12</div>
-          <div class="ball c">21</div>
-          <div class="ball d">33</div>
-          <div class="ball e">40</div>
-          <div class="ball f">45</div>
+        <div class="draw" aria-hidden="true" id="latest-draw-container">
+          <div class="ball-label" id="latest-round-label" style="position:absolute; top:-30px; left:0; font-size:0.8rem; font-weight:700; color:var(--brand);">최신 전 회차 당첨번호</div>
+          <div class="ball a" id="ball-0">-</div>
+          <div class="ball b" id="ball-1">-</div>
+          <div class="ball c" id="ball-2">-</div>
+          <div class="ball d" id="ball-3">-</div>
+          <div class="ball e" id="ball-4">-</div>
+          <div class="ball f" id="ball-5">-</div>
         </div>
       </section>
 
@@ -1085,6 +1086,10 @@
           if (!parsed || typeof parsed !== "object" || !parsed.presets) {
             throw new Error("model.json 형식이 올바르지 않습니다.");
           }
+          
+          // Render latest draw results in hero section
+          renderHeroLatestDraw(parsed);
+          
           return parsed;
         });
 
@@ -1254,6 +1259,38 @@
           .replaceAll(">", "&gt;")
           .replaceAll('"', "&quot;")
           .replaceAll("'", "&#39;");
+      }
+
+      function renderHeroLatestDraw(model) {
+        try {
+          const latestRound = model.source?.latest_round;
+          const draws = model.history?.draws;
+          if (!latestRound || !draws || !draws.length) return;
+          
+          const latestNumbers = draws[draws.length - 1];
+          if (!latestNumbers || latestNumbers.length < 6) return;
+
+          const roundLabel = document.getElementById("latest-round-label");
+          if (roundLabel) {
+            roundLabel.textContent = `${latestRound}회차 당첨번호`;
+          }
+
+          for (let i = 0; i < 6; i++) {
+            const ball = document.getElementById(`ball-${i}`);
+            if (ball) {
+              const num = latestNumbers[i];
+              ball.textContent = num;
+              // Re-apply range class based on number
+              ball.className = `ball ${getBallPosClass(i)} ${getRangeClass(num)}`;
+            }
+          }
+        } catch (e) {
+          console.error("Failed to render hero latest draw:", e);
+        }
+      }
+
+      function getBallPosClass(index) {
+        return ["a", "b", "c", "d", "e", "f"][index] || "a";
       }
 
       function setStatus(message) {
