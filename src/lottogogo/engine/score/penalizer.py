@@ -31,6 +31,10 @@ class PenaltyCalculator:
         self.poisson_window = poisson_window
         self.poisson_lambda = float(poisson_lambda)
         self.markov_lambda = float(markov_lambda)
+        
+        # Markov transition matrix cache (hash-based)
+        self._markov_cache: dict[int, np.ndarray] = {}
+        self._markov_cache_hash: int | None = None
 
     def calculate_poisson_penalty(self, history: pd.DataFrame) -> dict[int, float]:
         """Calculate Poisson-like penalties from recent appearance counts."""
@@ -80,7 +84,13 @@ class PenaltyCalculator:
         if len(ordered) < 2:
             return {number: 0.0 for number in range(1, TOTAL_NUMBERS + 1)}
 
-        matrix = self.build_transition_matrix(ordered)
+        # Use cached matrix if history unchanged
+        history_hash = hash(tuple(ordered["round"].values) if "round" in ordered.columns else tuple(range(len(ordered))))
+        if history_hash != self._markov_cache_hash:
+            self._markov_cache_hash = history_hash
+            self._markov_cache[history_hash] = self.build_transition_matrix(ordered)
+        
+        matrix = self._markov_cache[history_hash]
         last_round_numbers = self._row_numbers(ordered.tail(1).iloc[0])
 
         penalties: dict[int, float] = {}

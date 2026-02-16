@@ -68,6 +68,7 @@ TAG_LABELS = {
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build frontend model JSON from lotto history.")
     parser.add_argument("--history-csv", default="history.csv", help="Input history CSV path.")
+    parser.add_argument("--weights", default="data/optimized_weights.json", help="Path to optimized weights JSON (optional).")
     parser.add_argument("--output", default="data/model.json", help="Output model JSON path.")
     parser.add_argument("--chunk-size", type=int, default=20_000, help="Monte Carlo sampler chunk size.")
     parser.add_argument(
@@ -88,6 +89,11 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Optional base seed. If omitted, derived from latest round.",
     )
+    parser.add_argument(
+        "--use-hmm",
+        action="store_true",
+        help="Enable HMM scoring (slower but more accurate).",
+    )
     return parser.parse_args()
 
 
@@ -103,15 +109,39 @@ def combo_key(numbers: tuple[int, ...] | list[int]) -> str:
     return "-".join(str(int(value)) for value in numbers)
 
 
-def build_scores(history: pd.DataFrame) -> tuple[dict[int, float], dict[int, list[str]], set[int]]:
+def build_scores(history: pd.DataFrame, weights: dict[str, float] | None = None, use_hmm: bool = False) -> tuple[dict[int, float], dict[int, list[str]], set[int]]:
+    if weights is None:
+        weights = {}
+
     base_scores = BaseScoreCalculator(prior_alpha=1.0, prior_beta=1.0).calculate_scores(history, recent_n=50)
 
-    booster = BoostCalculator(hot_threshold=2, hot_window=5, cold_window=10)
+    booster = BoostCalculator(
+        hot_threshold=2, 
+        hot_window=5, 
+        cold_window=10,
+        hot_weight=weights.get("hot_weight", 0.4),
+        cold_weight=weights.get("cold_weight", 0.15),
+        neighbor_weight=weights.get("neighbor_weight", 0.3),
+        carryover_weight=weights.get("carryover_weight", 0.4),
+        reverse_weight=weights.get("reverse_weight", 0.1)
+    )
     boosts, boost_tags = booster.calculate_boosts(history)
 
-    penalties = PenaltyCalculator(poisson_window=20, poisson_lambda=0.0, markov_lambda=0.0).calculate_penalties(history)
+    penalties = PenaltyCalculator(
+        poisson_window=20, 
+        poisson_lambda=weights.get("poisson_lambda", 0.0), 
+        markov_lambda=weights.get("markov_lambda", 0.0)
+    ).calculate_penalties(history)
 
-    hmm_boosts, hmm_tags = HMMScorer(hot_boost=0.3, cold_boost=0.15, window=100).calculate_boosts(history)
+    # HMM scoring (optional, slow)
+    if use_hmm:
+        hmm_boosts, hmm_tags = HMMScorer(
+            hot_boost=weights.get("hmm_hot_boost", 0.3), 
+            cold_boost=weights.get("hmm_cold_boost", 0.15), 
+            window=100
+        ).calculate_boosts(history)
+    else:
+        hmm_boosts, hmm_tags = {}, {}
 
     combined_boosts = {number: boosts.get(number, 0.0) + hmm_boosts.get(number, 0.0) for number in range(1, 46)}
     for number, tags in hmm_tags.items():
@@ -241,7 +271,21 @@ def main() -> int:
     latest_round = int(history["round"].max())
     base_seed = int(args.seed) if args.seed is not None else latest_round
 
-    raw_scores, boost_tags, carryover_numbers = build_scores(history)
+    # Load optimized weights if they exist
+    weights: dict[str, float] = {}
+    weights_path = Path(args.weights)
+    if weights_path.exists():
+        print(f"📂 Loading optimized weights from {weights_path}")
+        try:
+            weights_data = json.loads(weights_path.read_text(encoding="utf-8"))
+            weights = weights_data.get("weights", {})
+            print(f"   - Cycle: {weights_data.get('cycle_label', 'unknown')}")
+        except Exception as e:
+            print(f"⚠️ Failed to load weights: {e}")
+    else:
+        print(f"ℹ️ No optimized weights found at {weights_path}, using defaults.")
+
+    raw_scores, boost_tags, carryover_numbers = build_scores(history, weights=weights, use_hmm=args.use_hmm)
 
     model_presets: dict[str, dict[str, object]] = {}
 
@@ -250,7 +294,7 @@ def main() -> int:
 
         base_prob_map = ProbabilityNormalizer.to_sampling_probabilities(
             raw_scores,
-            temperature=config.temperature,
+            temperature=weights.get("temperature", config.temperature),
             min_prob_floor=config.min_prob_floor,
         )
         base_prob_map = normalize_distribution(base_prob_map)

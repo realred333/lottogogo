@@ -177,6 +177,12 @@ src/lottogogo/
     ranker/
       scorer.py              # 조합 랭킹
       diversity.py           # 다양성 선택
+  tuning/
+    fitness.py               # GA Fitness 평가 (hit@K, mean_rank)
+    ga_optimizer.py          # DEAP 기반 GA 최적화기
+    feature_builder.py       # XGBoost Feature 추출기
+    xgb_ranker.py            # XGBoost 랭킹 비교
+    penalty_search.py        # 페널티 그리드 서치
   mvp/
     api.py
     service.py
@@ -211,8 +217,15 @@ uv run pytest -q
 ### 3) 추천 번호 생성
 
 ```bash
-uv run recommend.py
+uv run recommend.py --games 5 --weights data/optimized_weights.json
 ```
+
+| 옵션 | 기본값 | 설명 |
+|------|--------|------|
+| `--csv` | `history.csv` | 과거 추첨 데이터 CSV |
+| `--games` | `5` | 추천할 게임 세 수 |
+| `--seed` | `None` | 생성 시드 |
+| `--weights` | `None` | 가중치 JSON 경로 (생략 시 기본값 사용) |
 
 출력 예시:
 ```
@@ -238,13 +251,109 @@ uv run backtest.py --round 1100
 - 미래 데이터 유출 없음 (시점 분리)
 - Seed 기본 랜덤 (고정: `--seed 42`)
 
-### 5) 데이터 업데이트 (증분)
+### 5) GA 가중치 최적화
+
+유전 알고리즘으로 10개 엔진 가중치를 자동 최적화합니다.
+
+Windows에서 배치로 돌리고 로그를 파일로 남기려면 `run_ga.bat`을 사용하세요. (`ga_log.txt`에 기록)
+
+실시간 로그 확인:
+```powershell
+Get-Content .\ga_log.txt -Wait -Tail 50
+```
+
+```bash
+uv run python -m lottogogo.tuning.ga_optimizer \
+  --csv history.csv \
+  --train-end 900 --val-end 1100 \
+  --population 100 --generations 200 \
+  --jobs 4 \
+  --output data/optimized_weights.json \
+  --plot data/fitness_history.png
+```
+
+| 옵션 | 기본값 | 설명 |
+|------|--------|------|
+| `--csv` | `history.csv` | 과거 추첨 데이터 |
+| `--train-end` | `900` | 학습 마지막 회차 |
+| `--val-end` | `1100` | 검증 마지막 회차 |
+| `--population` | `100` | GA 개체 수 |
+| `--generations` | `200` | 세대 수 |
+| `--jobs` | `1` | 병렬 평가 워커 수 (스레드 기반) |
+| `--seed` | `42` | 랜덤 시드 (재현성) |
+| `--checkpoint` | `data/ga_checkpoint.json` | 체크포인트 경로 (25세대마다 저장) |
+| `--output` | `data/optimized_weights.json` | 결과 JSON 경로 |
+| `--plot` | `data/fitness_history.png` | 수렴 그래프 저장 경로 |
+| `--cycle-label` | `ga-weight-optimization-20260215` | 결과에 포함될 실행 라벨 |
+| `--quiet` | `false` | 진행 출력 최소화 |
+
+출력 예시:
+```
+[GA] Evaluating initial population...
+  Initial Pop:  10%|█         | 10/100 [01:10<...]
+GA Overall:  10%|█         | 20/200 [12:34<... , best=2.5102, avg=2.1543]
+...
+============================================================
+GA Optimization Result — Comparison
+============================================================
+Metric               Baseline    Optimized          Δ
+------------------------------------------------------------
+hit@15                 2.0000       2.5102    +0.5102
+hit@20                 2.6667       3.2000    +0.5333
+mean_rank              23.00        18.45      -4.55
+combined_fitness       2.0000       2.5102    +0.5102
+
+Optimized Weights:
+  carryover_weight       = 0.423100
+  cold_weight            = 0.178200
+  ...
+```
+
+**결과 해석:**
+- `hit@K`: 상위 K개 예측에 실제 당첨번호가 포함된 평균 개수 (높을수록 좋음)
+- `mean_rank`: 실제 당첨번호의 평균 순위 (낮을수록 좋음, 랜덤≈23)
+- `combined_fitness`: 0.6×train + 0.4×val (과적합 방지 혼합)
+- 랜덤 대비 `hit@15`가 `2.0 → 2.5+` 이상이면 유의미한 개선
+
+### 6) XGBoost 비교 실험
+
+XGBoost로 동일 지표를 비교하여 GA 결과의 유효성을 검증합니다.
+
+```bash
+uv run python -m lottogogo.tuning.xgb_ranker \
+  --csv history.csv \
+  --train-end 900 --val-end 1100 \
+  --ga-weights data/optimized_weights.json
+```
+
+출력 예시:
+```
+============================================================
+XGBoost Ranker Result
+============================================================
+Metric                    XGBoost           GA          Δ
+------------------------------------------------------------
+hit@15                     2.4500       2.5102    -0.0602
+hit@20                     3.1000       3.2000    -0.1000
+mean_rank                  19.20        18.45     +0.7500
+
+Feature Importance (top 10):
+  base_score               0.2341 ███████████
+  hot_boost                0.1523 ███████
+  ...
+```
+
+**결과 해석:**
+- GA와 XGBoost의 `hit@K` 비교 → GA가 우수하면 가중치 기반 접근이 유효
+- Feature Importance → 어떤 엔진 모듈이 예측에 가장 기여하는지 확인
+
+### 7) 데이터 업데이트 (증분)
 
 ```bash
 uv run python scripts/update_history_csv.py --csv history.csv --workers 8
 ```
 
-### 6) 프론트 모델 생성
+### 8) 프론트 모델 생성
 
 ```bash
 uv run python scripts/build_frontend_model.py --history-csv history.csv --output data/model.json
@@ -263,6 +372,12 @@ uv run python scripts/build_frontend_model.py --history-csv history.csv --output
 1. `history.csv` 증분 업데이트
 2. `data/model.json` 재생성 (preset별 100k)
 3. 두 파일 중 변경이 있을 때만 커밋
+
+#### 주간 가중치 최적화: `.github/workflows/ga-optimize.yml`
+
+- **매주 월요일 00:00(UTC)** 자동 실행
+- 최신 `history.csv` 기반으로 GA를 실행하여 엔진 가중치를 재조정
+- 업데이트된 `data/optimized_weights.json` 및 `fitness_history.png`를 자동 커밋
 
 ---
 

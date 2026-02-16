@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """LottoGoGo - 로또 번호 추천기"""
 
+import json
 import sys
 from datetime import datetime
+from pathlib import Path
 
 import pandas as pd
 
@@ -84,7 +86,7 @@ def exceeds_carryover_limit(combination: tuple[int, ...], carryover_numbers: set
     return carryover_count > MAX_CARRYOVER_IN_COMBO
 
 
-def main(csv_path: str = "history.csv", num_games: int = 5, seed: int | None = None):
+def main(csv_path: str = "history.csv", num_games: int = 5, seed: int | None = None, weights_path: str | None = None):
     """로또 번호 추천 실행"""
     
     # 시드 설정 (없으면 현재 시간 기반)
@@ -109,6 +111,21 @@ def main(csv_path: str = "history.csv", num_games: int = 5, seed: int | None = N
     latest_round = int(history["round"].max())
     print(f"📊 데이터: {len(history)}회차 (최신: {latest_round}회)")
 
+    # 1.1 최적화 가중치 로드
+    weights = {}
+    if weights_path:
+        w_path = Path(weights_path)
+        if w_path.exists():
+            print(f"📂 가중치 로드: {weights_path}")
+            try:
+                weights_data = json.loads(w_path.read_text(encoding="utf-8"))
+                weights = weights_data.get("weights", {})
+                print(f"   - Cycle: {weights_data.get('cycle_label', 'unknown')}")
+            except Exception as e:
+                print(f"⚠️ 가중치 로드 실패 (기본값 사용): {e}")
+        else:
+            print(f"⚠️ 가중치 파일을 찾을 수 없습니다: {weights_path} (기본값 사용)")
+
     # 과거 당첨번호 추출
     historical_draws = [
         tuple(row[NUMBER_COLS].astype(int).tolist()) 
@@ -118,9 +135,25 @@ def main(csv_path: str = "history.csv", num_games: int = 5, seed: int | None = N
     # 2. 점수 계산
     print("\n🧮 점수 계산 중...")
     base_calc = BaseScoreCalculator(prior_alpha=1.0, prior_beta=1.0)
-    booster = BoostCalculator(hot_threshold=2, hot_window=5, cold_window=10)
-    # poisson_lambda=0, markov_lambda=0: 둘 다 비활성화 (코드 유지, Hot/Carryover와 충돌 방지)
-    penalizer = PenaltyCalculator(poisson_window=20, poisson_lambda=0.0, markov_lambda=0.0)
+    
+    # 가중치 주입 (있을 경우)
+    booster = BoostCalculator(
+        hot_threshold=2, 
+        hot_window=5, 
+        cold_window=10,
+        hot_weight=weights.get("hot_weight", 0.4),
+        cold_weight=weights.get("cold_weight", 0.15),
+        neighbor_weight=weights.get("neighbor_weight", 0.3),
+        carryover_weight=weights.get("carryover_weight", 0.4),
+        reverse_weight=weights.get("reverse_weight", 0.1)
+    )
+    
+    penalizer = PenaltyCalculator(
+        poisson_window=20, 
+        poisson_lambda=weights.get("poisson_lambda", 0.0), 
+        markov_lambda=weights.get("markov_lambda", 0.0)
+    )
+    
     ensembler = ScoreEnsembler(minimum_score=0.0)
 
     base_scores = base_calc.calculate_scores(history, recent_n=50)
@@ -128,7 +161,11 @@ def main(csv_path: str = "history.csv", num_games: int = 5, seed: int | None = N
     penalties = penalizer.calculate_penalties(history)
     
     # HMM scoring
-    hmm_scorer = HMMScorer(hot_boost=0.3, cold_boost=0.15, window=100)
+    hmm_scorer = HMMScorer(
+        hot_boost=weights.get("hmm_hot_boost", 0.3), 
+        cold_boost=weights.get("hmm_cold_boost", 0.15), 
+        window=100
+    )
     hmm_boosts, hmm_tags = hmm_scorer.calculate_boosts(history)
     hmm_summary = hmm_scorer.get_summary()
     
@@ -159,7 +196,9 @@ def main(csv_path: str = "history.csv", num_games: int = 5, seed: int | None = N
 
     # 상위 확률 번호
     probs = ProbabilityNormalizer.to_sampling_probabilities(
-        raw_scores, temperature=0.5, min_prob_floor=0.005
+        raw_scores, 
+        temperature=weights.get("temperature", 0.5), 
+        min_prob_floor=0.005
     )
     
     # Poisson/Markov 개별 페널티 계산
@@ -225,14 +264,36 @@ def main(csv_path: str = "history.csv", num_games: int = 5, seed: int | None = N
 
     # 5. 랭킹 및 다양성 적용
     print("🏆 랭킹 및 다양성 적용...")
+
+    # 샘플링/필터링 과정에서 동일 조합이 다수 포함될 수 있어(top_k가 중복으로 채워짐)
+    # 다양성 선택에서 게임 수가 부족해질 수 있다. 랭킹 전 중복 제거로 후보 폭을 확보한다.
+    unique_filtered = list(dict.fromkeys(filtered))
+    if len(unique_filtered) != len(filtered):
+        print(f"   (중복 제거) {len(filtered):,} -> {len(unique_filtered):,}개")
+    filtered = unique_filtered
+
     ranker = CombinationRanker()
-    ranked = ranker.rank(filtered, raw_scores, top_k=100)
-    selector = DiversitySelector(max_overlap=3)
-    final = selector.select([r.numbers for r in ranked], output_count=num_games)
+    ranked = ranker.rank(filtered, raw_scores)
+    candidates = [r.numbers for r in ranked]
+
+    base_overlap = 3
+    selector = DiversitySelector(max_overlap=base_overlap)
+    final = selector.select(candidates, output_count=num_games)
+
+    # 다양성 조건이 너무 빡빡해 게임 수가 부족하면 점진적으로 완화해 채운다.
+    if len(final) < num_games:
+        print(f"   ⚠️ 다양성 조건(max_overlap={base_overlap})으로 {len(final)}/{num_games}개만 선택됨. 조건을 완화합니다.")
+        for overlap in range(base_overlap + 1, 7):
+            final = DiversitySelector(max_overlap=overlap).select(candidates, output_count=num_games)
+            if len(final) >= num_games:
+                print(f"   -> max_overlap={overlap}로 {len(final)}/{num_games}개 선택")
+                break
 
     # 결과 출력
     print("\n" + "=" * 60)
-    print(f"🎯 {latest_round + 1}회 추천 번호 ({num_games}게임)")
+    if len(final) < num_games:
+        print(f"⚠️ 요청 {num_games}게임 중 {len(final)}게임만 생성되었습니다. (후보 부족/조건 과다)")
+    print(f"🎯 {latest_round + 1}회 추천 번호 ({len(final)}/{num_games}게임)")
     print("=" * 60)
     
     for i, combo in enumerate(final, 1):
@@ -255,6 +316,7 @@ if __name__ == "__main__":
     parser.add_argument("--csv", default="history.csv", help="CSV 파일 경로")
     parser.add_argument("--games", type=int, default=5, help="추천 게임 수")
     parser.add_argument("--seed", type=int, default=None, help="랜덤 시드")
+    parser.add_argument("--weights", default=None, help="최적화 가중치 JSON 경로")
     
     args = parser.parse_args()
-    main(csv_path=args.csv, num_games=args.games, seed=args.seed)
+    main(csv_path=args.csv, num_games=args.games, seed=args.seed, weights_path=args.weights)

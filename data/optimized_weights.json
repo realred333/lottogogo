@@ -1,0 +1,27 @@
+{
+  "cycle_label": "ga-weight-optimization-20260215",
+  "optimized_at": "2026-02-16T12:35:05+0900",
+  "weights": {
+    "hot_weight": 0.772661474286868,
+    "cold_weight": 0.3405795359682479,
+    "neighbor_weight": 0.8062569220639371,
+    "carryover_weight": 0.10912438789727039,
+    "reverse_weight": 0.43939780201189377,
+    "poisson_lambda": 0.34946225406596204,
+    "markov_lambda": 0.12358589850384508,
+    "temperature": 0.1
+  },
+  "fitness": {
+    "hit_at_15": 2.06,
+    "hit_at_20": 2.815,
+    "mean_rank": 22.59333333333333,
+    "train_fitness": 2.75,
+    "val_fitness": 2.06,
+    "combined_fitness": 2.1797925925925923
+  },
+  "baseline": {
+    "hit_at_15": 2.0,
+    "hit_at_20": 2.6666666666666665,
+    "mean_rank": 22.5
+  }
+}

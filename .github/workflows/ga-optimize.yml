@@ -1,0 +1,53 @@
+name: Weekly GA Weight Optimization
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'  # Every Monday at 00:00 UTC
+  workflow_dispatch:      # Manual trigger
+    inputs:
+      generations:
+        description: 'Number of generations'
+        required: false
+        default: '50'
+      population:
+        description: 'Population size'
+        required: false
+        default: '100'
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: bkarlson/setup-uv@v1
+        with:
+          version: 'latest'
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run GA Optimization
+        run: |
+          uv run python -m lottogogo.tuning.ga_optimizer \
+            --generations ${{ github.event.inputs.generations || '50' }} \
+            --population ${{ github.event.inputs.population || '100' }} \
+            --jobs 4 \
+            --output data/optimized_weights.json \
+            --plot data/fitness_history.png \
+            --cycle-label "auto-optimization-${{ github.sha }}"
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/optimized_weights.json data/fitness_history.png
+          git commit -m "chore: update optimized weights [skip ci]" || echo "No changes to commit"
+          git push
