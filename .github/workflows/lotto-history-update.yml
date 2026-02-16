@@ -33,12 +33,12 @@ jobs:
       - name: Update history.csv (incremental only)
         run: python scripts/update_history_csv.py --csv history.csv --workers 8
 
-      - name: Build frontend model.json (100k Monte Carlo per preset)
-        run: python scripts/build_frontend_model.py --history-csv history.csv --output data/model.json
+      - name: Build frontend models (GA + XGBoost)
+        run: python scripts/build_frontend_model.py --history-csv history.csv --output-ga data/model_ga.json --output-xgb data/model_xgb.json --output data/model.json
 
       - name: Commit and push if changed
         run: |
-          if git diff --quiet -- history.csv data/model.json; then
+          if git diff --quiet -- history.csv data/model_ga.json data/model_xgb.json data/model.json; then
             echo "No new round/model change. Nothing to commit."
             exit 0
           fi
@@ -47,6 +47,6 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add history.csv data/model.json
-          git commit -m "chore(data): update history/model (round ${latest_round})"
+          git add history.csv data/model_ga.json data/model_xgb.json data/model.json
+          git commit -m "chore(data): update history/models (round ${latest_round})"
           git push

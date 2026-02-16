@@ -44,6 +44,8 @@ from lottogogo.engine.score import (
     ScoreEnsembler,
 )
 from lottogogo.engine.score.hmm_scorer import HMMScorer
+from lottogogo.tuning.feature_builder import FeatureBuilder
+from lottogogo.tuning.xgb_ranker import XGBRanker
 from lottogogo.mvp.service import (
     NUMBER_COLS,
     PRESET_CONFIGS,
@@ -69,7 +71,9 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build frontend model JSON from lotto history.")
     parser.add_argument("--history-csv", default="history.csv", help="Input history CSV path.")
     parser.add_argument("--weights", default="data/optimized_weights.json", help="Path to optimized weights JSON (optional).")
-    parser.add_argument("--output", default="data/model.json", help="Output model JSON path.")
+    parser.add_argument("--output-ga", default="data/model_ga.json", help="Output GA model JSON path.")
+    parser.add_argument("--output-xgb", default="data/model_xgb.json", help="Output XGBoost model JSON path.")
+    parser.add_argument("--output", default=None, help="Legacy single output (deprecated).")
     parser.add_argument("--chunk-size", type=int, default=20_000, help="Monte Carlo sampler chunk size.")
     parser.add_argument(
         "--base-weight",
@@ -248,6 +252,42 @@ def preset_seed(base_seed: int, preset_name: str) -> int:
     return base_seed * 131 + offset
 
 
+def calculate_probabilities_xgb(history: pd.DataFrame, weights: dict[str, float] | None = None) -> dict[int, float]:
+    """Calculate probabilities using XGBoost model."""
+    import xgboost as xgb
+    
+    latest_round = int(history["round"].max())
+    
+    # Build features and train XGBoost
+    builder = FeatureBuilder(history, weights=weights)
+    
+    # Train on all historical data
+    X_train, y_train = builder.build((1, latest_round))
+    spw = FeatureBuilder.scale_pos_weight(y_train)
+    
+    # Create and train XGBoost model directly
+    model = xgb.XGBClassifier(
+        scale_pos_weight=spw,
+        max_depth=6,
+        learning_rate=0.05,
+        n_estimators=200,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        random_state=42,
+        use_label_encoder=False,
+        eval_metric="logloss",
+    )
+    model.fit(X_train, y_train)
+    
+    # Predict probabilities for next round
+    next_round = latest_round + 1
+    features = builder._extract_features(history, next_round, weights=weights)
+    probs_raw = model.predict_proba(features)[:, 1]
+    
+    # Convert to dict
+    return {n: float(probs_raw[n-1]) for n in range(1, 46)}
+
+
 def main() -> int:
     args = parse_args()
 
@@ -412,16 +452,57 @@ def main() -> int:
         "presets": model_presets,
     }
 
-    output_path = Path(args.output)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(
+    # Save GA model
+    output_ga = Path(args.output_ga)
+    output_ga.parent.mkdir(parents=True, exist_ok=True)
+    output_ga.write_text(
         json.dumps(model, ensure_ascii=False, separators=(",", ":"), sort_keys=True),
         encoding="utf-8",
     )
+    print(f"✅ GA model saved: {output_ga}")
+    
+    # Generate and save XGBoost model
+    print("\n🧠 Generating XGBoost model...")
+    try:
+        xgb_probs = calculate_probabilities_xgb(history, weights=weights)
+        xgb_probs_normalized = normalize_distribution(xgb_probs)
+        
+        # Create XGBoost model with same structure but different probabilities
+        xgb_model = model.copy()
+        xgb_model["model_type"] = "xgboost"
+        
+        # Update sampling weights in all presets
+        for preset_name in xgb_model["presets"]:
+            xgb_model["presets"][preset_name]["sampling"]["weights"] = [
+                float(xgb_probs_normalized[n]) for n in range(1, 46)
+            ]
+            xgb_model["presets"][preset_name]["sampling"]["base_probabilities"] = [
+                float(xgb_probs_normalized[n]) for n in range(1, 46)
+            ]
+        
+        output_xgb = Path(args.output_xgb)
+        output_xgb.parent.mkdir(parents=True, exist_ok=True)
+        output_xgb.write_text(
+            json.dumps(xgb_model, ensure_ascii=False, separators=(",", ":"), sort_keys=True),
+            encoding="utf-8",
+        )
+        print(f"✅ XGBoost model saved: {output_xgb}")
+    except Exception as e:
+        print(f"⚠️ XGBoost model generation failed: {e}")
+        print("   Continuing with GA model only...")
+    
+    # Legacy single output support
+    if args.output:
+        legacy_path = Path(args.output)
+        legacy_path.parent.mkdir(parents=True, exist_ok=True)
+        legacy_path.write_text(
+            json.dumps(model, ensure_ascii=False, separators=(",", ":"), sort_keys=True),
+            encoding="utf-8",
+        )
+        print(f"✅ Legacy model saved: {legacy_path}")
 
-    print(f"history rows      : {len(history)}")
+    print(f"\nhistory rows      : {len(history)}")
     print(f"latest round      : {latest_round}")
-    print(f"model output      : {output_path}")
     print(f"history exact keys: {len(exact_keys)}")
     print(f"history 5-subsets : {len(five_subset_keys)}")
     for preset_name, preset_data in model_presets.items():

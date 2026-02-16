@@ -1,1175 +1,1186 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LottoGoGo | 로또 확률 실험 기반 선택 보조 도구</title>
-    <meta name="description" content="로또 번호 선택을 위한 확률 실험 기반 보조 도구입니다. 당첨을 보장하지 않으며 통계 필터로 무근거 선택을 줄입니다." />
-    <meta
-      name="keywords"
-      content="로또 확률 실험, 로또 번호 선택 보조, 통계 기반 번호 선택, LottoGoGo"
-    />
-    <meta
-      name="robots"
-      content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"
-    />
-    <meta name="author" content="LottoGoGo" />
-    <link rel="canonical" href="https://lottogogo.vercel.app/" />
-    <link rel="sitemap" type="application/xml" title="Sitemap" href="https://lottogogo.vercel.app/sitemap.xml" />
-    <meta property="og:type" content="website" />
-    <meta property="og:locale" content="ko_KR" />
-    <meta property="og:site_name" content="LottoGoGo" />
-    <meta property="og:title" content="LottoGoGo | 로또 확률 실험 기반 선택 보조 도구" />
-    <meta property="og:description" content="로또 번호 선택을 위한 확률 실험 기반 보조 도구입니다. 당첨을 보장하지 않으며 통계 필터로 무근거 선택을 줄입니다." />
-    <meta property="og:url" content="https://lottogogo.vercel.app/" />
-    <meta property="og:image" content="https://lottogogo.vercel.app/assets/og-image.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="LottoGoGo | 로또 확률 실험 기반 선택 보조 도구" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="LottoGoGo | 로또 확률 실험 기반 선택 보조 도구" />
-    <meta name="twitter:description" content="로또 번호 선택을 위한 확률 실험 기반 보조 도구입니다. 당첨을 보장하지 않으며 통계 필터로 무근거 선택을 줄입니다." />
-    <meta name="twitter:url" content="https://lottogogo.vercel.app/" />
-    <meta name="twitter:image" content="https://lottogogo.vercel.app/assets/og-image.png" />
-    <meta name="twitter:image:alt" content="LottoGoGo | 로또 확률 실험 기반 선택 보조 도구" />
-    <meta name="google-site-verification" content="PbH0mni_SrDNFhpznnlQNcklvSnXtGVP9GhOhedijYQ" />
-    <meta name="naver-site-verification" content="bfd8bd236fd5f7ac42c026fbb28dfd437612f0fd" />
-    <script type="application/ld+json">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LottoGoGo | 로또 확률 실험 기반 선택 보조 도구</title>
+  <meta name="description" content="로또 번호 선택을 위한 확률 실험 기반 보조 도구입니다. 당첨을 보장하지 않으며 통계 필터로 무근거 선택을 줄입니다." />
+  <meta name="keywords" content="로또 확률 실험, 로또 번호 선택 보조, 통계 기반 번호 선택, LottoGoGo" />
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+  <meta name="author" content="LottoGoGo" />
+  <link rel="canonical" href="https://lottogogo.vercel.app/" />
+  <link rel="sitemap" type="application/xml" title="Sitemap" href="https://lottogogo.vercel.app/sitemap.xml" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="ko_KR" />
+  <meta property="og:site_name" content="LottoGoGo" />
+  <meta property="og:title" content="LottoGoGo | 로또 확률 실험 기반 선택 보조 도구" />
+  <meta property="og:description" content="로또 번호 선택을 위한 확률 실험 기반 보조 도구입니다. 당첨을 보장하지 않으며 통계 필터로 무근거 선택을 줄입니다." />
+  <meta property="og:url" content="https://lottogogo.vercel.app/" />
+  <meta property="og:image" content="https://lottogogo.vercel.app/assets/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="LottoGoGo | 로또 확률 실험 기반 선택 보조 도구" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="LottoGoGo | 로또 확률 실험 기반 선택 보조 도구" />
+  <meta name="twitter:description" content="로또 번호 선택을 위한 확률 실험 기반 보조 도구입니다. 당첨을 보장하지 않으며 통계 필터로 무근거 선택을 줄입니다." />
+  <meta name="twitter:url" content="https://lottogogo.vercel.app/" />
+  <meta name="twitter:image" content="https://lottogogo.vercel.app/assets/og-image.png" />
+  <meta name="twitter:image:alt" content="LottoGoGo | 로또 확률 실험 기반 선택 보조 도구" />
+  <meta name="google-site-verification" content="PbH0mni_SrDNFhpznnlQNcklvSnXtGVP9GhOhedijYQ" />
+  <meta name="naver-site-verification" content="bfd8bd236fd5f7ac42c026fbb28dfd437612f0fd" />
+  <script type="application/ld+json">
       {"@context":"https://schema.org","@type":"WebSite","name":"LottoGoGo","url":"https://lottogogo.vercel.app/","inLanguage":"ko-KR","description":"로또 번호 선택을 위한 확률 실험 기반 보조 도구입니다. 당첨을 보장하지 않으며 통계 필터로 무근거 선택을 줄입니다."}
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --bg-0: #05070d;
-        --bg-1: #0a1020;
-        --bg-2: #131a2b;
-        --surface: rgba(15, 21, 35, 0.76);
-        --surface-strong: rgba(21, 30, 49, 0.95);
-        --line: rgba(255, 255, 255, 0.12);
-        --line-strong: rgba(255, 255, 255, 0.22);
-        --text: #f5f8ff;
-        --muted: #a8b3cf;
-        --brand: #0dd2a0;
-        --brand-2: #41f3c6;
-        --accent: #ff8c66;
-        --warning: #ff7b7b;
-        --good: #29d49a;
-        --focus: rgba(13, 210, 160, 0.5);
-        --glass-shadow: 0 16px 44px rgba(0, 0, 0, 0.42);
-        --hero-gradient: linear-gradient(120deg, #41f3c6 0%, #0dd2a0 35%, #ff8c66 100%);
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --bg-0: #05070d;
+      --bg-1: #0a1020;
+      --bg-2: #131a2b;
+      --surface: rgba(15, 21, 35, 0.76);
+      --surface-strong: rgba(21, 30, 49, 0.95);
+      --line: rgba(255, 255, 255, 0.12);
+      --line-strong: rgba(255, 255, 255, 0.22);
+      --text: #f5f8ff;
+      --muted: #a8b3cf;
+      --brand: #0dd2a0;
+      --brand-2: #41f3c6;
+      --accent: #ff8c66;
+      --warning: #ff7b7b;
+      --good: #29d49a;
+      --focus: rgba(13, 210, 160, 0.5);
+      --glass-shadow: 0 16px 44px rgba(0, 0, 0, 0.42);
+      --hero-gradient: linear-gradient(120deg, #41f3c6 0%, #0dd2a0 35%, #ff8c66 100%);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      font-family: "IBM Plex Sans KR", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 18% 18%, #19385c 0%, transparent 44%),
+        radial-gradient(circle at 82% 11%, #352146 0%, transparent 41%),
+        radial-gradient(circle at 50% 78%, #1c2f2f 0%, transparent 48%),
+        linear-gradient(160deg, var(--bg-0) 0%, var(--bg-1) 56%, var(--bg-2) 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.12) 0.4px, transparent 0.4px);
+      background-size: 4px 4px;
+      opacity: 0.08;
+    }
+
+    .orb-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(72px);
+      opacity: 0.3;
+      animation: drift 16s ease-in-out infinite;
+    }
+
+    .orb.one {
+      width: 420px;
+      height: 420px;
+      left: -90px;
+      top: -90px;
+      background: #36dfb7;
+    }
+
+    .orb.two {
+      width: 360px;
+      height: 360px;
+      right: -120px;
+      top: 80px;
+      background: #5e6dff;
+      animation-delay: -6s;
+    }
+
+    .orb.three {
+      width: 420px;
+      height: 420px;
+      right: 22%;
+      bottom: -180px;
+      background: #ff8c66;
+      animation-delay: -11s;
+    }
+
+    @keyframes drift {
+
+      0%,
+      100% {
+        transform: translate3d(0, 0, 0) scale(1);
       }
 
-      * {
-        box-sizing: border-box;
+      50% {
+        transform: translate3d(32px, -28px, 0) scale(1.14);
+      }
+    }
+
+    .shell {
+      width: min(1140px, 100% - 2rem);
+      margin: 0 auto;
+      padding: 1.15rem 0 3.2rem;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.55rem 0.35rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.58rem;
+      font-family: "Outfit", sans-serif;
+      font-weight: 700;
+      font-size: 1.13rem;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(150deg, rgba(13, 210, 160, 0.28), rgba(255, 140, 102, 0.3));
+      border: 1px solid rgba(255, 255, 255, 0.26);
+    }
+
+    .header-nav {
+      display: flex;
+      gap: 0.85rem;
+    }
+
+    .header-nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .header-nav a:hover {
+      color: #ffffff;
+    }
+
+    .panel {
+      position: relative;
+      border: 1px solid var(--line);
+      background: linear-gradient(170deg, rgba(17, 27, 45, 0.84), rgba(8, 14, 26, 0.84));
+      box-shadow: var(--glass-shadow);
+      border-radius: 26px;
+      backdrop-filter: blur(9px);
+    }
+
+    .hero {
+      margin-top: 0.4rem;
+      padding: clamp(1.4rem, 2.7vw, 2.2rem);
+      display: grid;
+      gap: 1.2rem;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      align-items: center;
+    }
+
+    .kicker {
+      margin: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      width: fit-content;
+      border: 1px solid rgba(65, 243, 198, 0.42);
+      background: rgba(65, 243, 198, 0.13);
+      color: #8bffe1;
+      border-radius: 999px;
+      padding: 0.35rem 0.74rem;
+      font-size: 0.79rem;
+      font-weight: 700;
+    }
+
+    h1 {
+      font-family: "Outfit", sans-serif;
+      margin: 0.75rem 0 0.75rem;
+      font-size: clamp(2rem, 4.8vw, 3.6rem);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+    }
+
+    .gradient {
+      background: var(--hero-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(0.98rem, 1.8vw, 1.08rem);
+    }
+
+    .hero-actions {
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+    }
+
+    .hero-btn {
+      border: 0;
+      border-radius: 14px;
+      background: linear-gradient(120deg, #12d8a5, #08b68e);
+      color: #012519;
+      font-weight: 800;
+      padding: 0.74rem 1rem;
+      font-size: 0.93rem;
+      cursor: pointer;
+    }
+
+    .hero-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .hero-note {
+      margin: 0;
+      color: #d7e0ff;
+      font-size: 0.86rem;
+    }
+
+    .quick-badge {
+      margin-top: 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      padding: 0.4rem 0.75rem;
+      background: rgba(255, 255, 255, 0.06);
+      color: #dce6ff;
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    .draw {
+      position: relative;
+      min-height: 260px;
+    }
+
+    .ball {
+      position: absolute;
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-family: "Outfit", sans-serif;
+      font-size: 1.22rem;
+      font-weight: 700;
+      color: #fff;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+      animation: floaty 3.6s ease-in-out infinite;
+    }
+
+    .ball.a {
+      left: 6%;
+      top: 11%;
+      background: linear-gradient(160deg, #4ca7ff, #2168ce);
+    }
+
+    .ball.b {
+      right: 15%;
+      top: 2%;
+      background: linear-gradient(160deg, #ff9f73, #dd5a31);
+      animation-delay: -0.5s;
+    }
+
+    .ball.c {
+      left: 0;
+      bottom: 28%;
+      background: linear-gradient(160deg, #8f98ff, #5f60d4);
+      animation-delay: -1.2s;
+    }
+
+    .ball.d {
+      right: 3%;
+      bottom: 23%;
+      background: linear-gradient(160deg, #3de0b3, #18a97f);
+      animation-delay: -2s;
+    }
+
+    .ball.e {
+      left: 30%;
+      bottom: 2%;
+      background: linear-gradient(160deg, #ffc165, #f39135);
+      animation-delay: -1.7s;
+    }
+
+    .ball.f {
+      right: 36%;
+      top: 40%;
+      background: linear-gradient(160deg, #ff7fa4, #e05282);
+      animation-delay: -0.9s;
+    }
+
+    @keyframes floaty {
+
+      0%,
+      100% {
+        transform: translateY(0);
       }
 
-      html,
-      body {
-        margin: 0;
-        min-height: 100%;
+      50% {
+        transform: translateY(-12px);
       }
+    }
 
-      body {
-        font-family: "IBM Plex Sans KR", sans-serif;
-        color: var(--text);
-        background: radial-gradient(circle at 18% 18%, #19385c 0%, transparent 44%),
-          radial-gradient(circle at 82% 11%, #352146 0%, transparent 41%),
-          radial-gradient(circle at 50% 78%, #1c2f2f 0%, transparent 48%),
-          linear-gradient(160deg, var(--bg-0) 0%, var(--bg-1) 56%, var(--bg-2) 100%);
-        overflow-x: hidden;
+    .generator {
+      margin-top: 1rem;
+      padding: 1.15rem;
+    }
+
+    .generator-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.8rem;
+    }
+
+    .generator-head h2,
+    .results-head h2 {
+      margin: 0;
+      font-family: "Outfit", sans-serif;
+      font-size: clamp(1.25rem, 2.5vw, 1.55rem);
+    }
+
+    .generator-head p,
+    .results-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.89rem;
+    }
+
+    .control-wrap {
+      margin-top: 0.9rem;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .control-card {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 0.78rem;
+    }
+
+    .label {
+      margin-bottom: 0.4rem;
+      display: block;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #dfebff;
+    }
+
+    .seg {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.35rem;
+    }
+
+    .seg button {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.02);
+      color: #dbe7ff;
+      border-radius: 12px;
+      padding: 0.56rem 0.58rem;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.84rem;
+    }
+
+    .seg button:hover {
+      border-color: var(--line-strong);
+    }
+
+    .seg button.is-active {
+      border-color: rgba(13, 210, 160, 0.55);
+      background: linear-gradient(120deg, rgba(13, 210, 160, 0.22), rgba(65, 243, 198, 0.12));
+      color: #c5ffef;
+    }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 0.56rem 0.68rem;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: #deebff;
+      font-size: 0.86rem;
+    }
+
+    .advanced {
+      margin-top: 0.62rem;
+    }
+
+    .advanced input {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(7, 12, 24, 0.76);
+      color: #fff;
+      border-radius: 10px;
+      padding: 0.56rem 0.62rem;
+      font: inherit;
+    }
+
+    .advanced input:focus {
+      outline: 2px solid var(--focus);
+      border-color: transparent;
+    }
+
+    .action-row {
+      margin-top: 0.8rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.58rem;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 13px;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 0.9rem;
+      padding: 0.7rem 0.95rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .btn-main {
+      background: var(--hero-gradient);
+      color: #0f1324;
+    }
+
+    .btn-sub {
+      background: rgba(255, 255, 255, 0.06);
+      color: #ecf1ff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn:disabled {
+      opacity: 0.66;
+      cursor: progress;
+    }
+
+    .spinner {
+      width: 15px;
+      height: 15px;
+      border: 2px solid rgba(15, 19, 36, 0.3);
+      border-top-color: #0f1324;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
       }
+    }
 
-      body::before {
-        content: "";
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        z-index: -1;
-        background-image: radial-gradient(rgba(255, 255, 255, 0.12) 0.4px, transparent 0.4px);
-        background-size: 4px 4px;
-        opacity: 0.08;
+    .status {
+      min-height: 1.25rem;
+      margin-top: 0.5rem;
+      font-size: 0.86rem;
+      color: #ffb9a5;
+      font-weight: 600;
+    }
+
+    .results {
+      margin-top: 1rem;
+      padding: 1.1rem;
+    }
+
+    .results-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.7rem;
+    }
+
+    .insight {
+      margin-top: 0.7rem;
+      border-radius: 14px;
+      border: 1px solid rgba(13, 210, 160, 0.35);
+      background: rgba(13, 210, 160, 0.12);
+      color: #c4ffef;
+      font-size: 0.86rem;
+      font-weight: 700;
+      padding: 0.52rem 0.7rem;
+    }
+
+    .cards {
+      margin-top: 0.85rem;
+      display: grid;
+      gap: 0.7rem;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .result-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--surface-strong);
+      padding: 0.78rem;
+      display: grid;
+      gap: 0.62rem;
+      transform: translateY(14px);
+      opacity: 0;
+      animation: card-in 0.45s ease forwards;
+    }
+
+    @keyframes card-in {
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
+    }
 
-      .orb-layer {
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        z-index: -1;
-      }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-      .orb {
-        position: absolute;
-        border-radius: 50%;
-        filter: blur(72px);
-        opacity: 0.3;
-        animation: drift 16s ease-in-out infinite;
-      }
+    .rank {
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.18rem 0.55rem;
+      font-family: "Outfit", sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
 
-      .orb.one {
-        width: 420px;
-        height: 420px;
-        left: -90px;
-        top: -90px;
-        background: #36dfb7;
-      }
+    .score-pill {
+      border-radius: 999px;
+      background: rgba(41, 212, 154, 0.14);
+      color: #9affd8;
+      border: 1px solid rgba(41, 212, 154, 0.35);
+      padding: 0.2rem 0.52rem;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
 
-      .orb.two {
-        width: 360px;
-        height: 360px;
-        right: -120px;
-        top: 80px;
-        background: #5e6dff;
-        animation-delay: -6s;
-      }
+    .number-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.36rem;
+    }
 
-      .orb.three {
-        width: 420px;
-        height: 420px;
-        right: 22%;
-        bottom: -180px;
-        background: #ff8c66;
-        animation-delay: -11s;
-      }
+    .num {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-family: "Outfit", sans-serif;
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: #fff;
+    }
 
-      @keyframes drift {
-        0%,
-        100% {
-          transform: translate3d(0, 0, 0) scale(1);
-        }
-        50% {
-          transform: translate3d(32px, -28px, 0) scale(1.14);
-        }
-      }
+    .range-1 {
+      background: linear-gradient(160deg, #5ab1ff, #1f72dd);
+    }
 
-      .shell {
-        width: min(1140px, 100% - 2rem);
-        margin: 0 auto;
-        padding: 1.15rem 0 3.2rem;
-      }
+    .range-2 {
+      background: linear-gradient(160deg, #12d9a7, #0e9f7d);
+    }
 
-      .header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0.55rem 0.35rem;
-      }
+    .range-3 {
+      background: linear-gradient(160deg, #fbbf5d, #dd7c2a);
+    }
 
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 0.58rem;
-        font-family: "Outfit", sans-serif;
-        font-weight: 700;
-        font-size: 1.13rem;
-      }
+    .range-4 {
+      background: linear-gradient(160deg, #fa8cb3, #cf4f7c);
+    }
 
-      .brand-mark {
-        width: 34px;
-        height: 34px;
-        border-radius: 10px;
-        display: grid;
-        place-items: center;
-        background: linear-gradient(150deg, rgba(13, 210, 160, 0.28), rgba(255, 140, 102, 0.3));
-        border: 1px solid rgba(255, 255, 255, 0.26);
-      }
+    .range-5 {
+      background: linear-gradient(160deg, #8d96ff, #595bdb);
+    }
 
-      .header-nav {
-        display: flex;
-        gap: 0.85rem;
-      }
+    .meta {
+      display: grid;
+      gap: 0.45rem;
+    }
 
-      .header-nav a {
-        color: var(--muted);
-        text-decoration: none;
-        font-size: 0.9rem;
-        font-weight: 600;
-      }
+    .meta-group {
+      display: flex;
+      gap: 0.36rem;
+      flex-wrap: wrap;
+    }
 
-      .header-nav a:hover {
-        color: #ffffff;
-      }
+    .chip {
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      line-height: 1;
+      padding: 0.34rem 0.52rem;
+    }
 
-      .panel {
-        position: relative;
-        border: 1px solid var(--line);
-        background: linear-gradient(170deg, rgba(17, 27, 45, 0.84), rgba(8, 14, 26, 0.84));
-        box-shadow: var(--glass-shadow);
-        border-radius: 26px;
-        backdrop-filter: blur(9px);
-      }
+    .chip.tag {
+      background: rgba(255, 140, 102, 0.17);
+      border: 1px solid rgba(255, 140, 102, 0.33);
+      color: #ffc5b0;
+    }
 
+    .chip.reason {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: #e5eeff;
+    }
+
+    .meta-title {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: #9ab0d7;
+    }
+
+    .empty {
+      margin-top: 0.8rem;
+      border-radius: 16px;
+      border: 1px dashed rgba(255, 255, 255, 0.24);
+      padding: 1.1rem;
+      color: #c8d7f9;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .cta {
+      margin-top: 1rem;
+      padding: 1.1rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.8rem;
+    }
+
+    .cta p {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #dce6ff;
+      font-weight: 600;
+    }
+
+    .pay {
+      text-decoration: none;
+      color: #0f1222;
+      background: linear-gradient(120deg, #ffab7e, #ff8053);
+      border-radius: 12px;
+      padding: 0.68rem 1rem;
+      font-weight: 900;
+    }
+
+    .notice {
+      margin-top: 1rem;
+      padding: 1rem 1.1rem;
+    }
+
+    .notice h3 {
+      margin: 0 0 0.6rem;
+      font-family: "Outfit", sans-serif;
+    }
+
+    .notice ul {
+      margin: 0;
+      padding-left: 1rem;
+      color: #bfcae4;
+    }
+
+    .notice li+li {
+      margin-top: 0.35rem;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    @media (max-width: 980px) {
       .hero {
-        margin-top: 0.4rem;
-        padding: clamp(1.4rem, 2.7vw, 2.2rem);
-        display: grid;
-        gap: 1.2rem;
-        grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-        align-items: center;
-      }
-
-      .kicker {
-        margin: 0;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        width: fit-content;
-        border: 1px solid rgba(65, 243, 198, 0.42);
-        background: rgba(65, 243, 198, 0.13);
-        color: #8bffe1;
-        border-radius: 999px;
-        padding: 0.35rem 0.74rem;
-        font-size: 0.79rem;
-        font-weight: 700;
-      }
-
-      h1 {
-        font-family: "Outfit", sans-serif;
-        margin: 0.75rem 0 0.75rem;
-        font-size: clamp(2rem, 4.8vw, 3.6rem);
-        line-height: 1.05;
-        letter-spacing: -0.02em;
-      }
-
-      .gradient {
-        background: var(--hero-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-      }
-
-      .sub {
-        margin: 0;
-        color: var(--muted);
-        font-size: clamp(0.98rem, 1.8vw, 1.08rem);
-      }
-
-      .hero-actions {
-        margin-top: 1rem;
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 0.65rem;
-      }
-
-      .hero-btn {
-        border: 0;
-        border-radius: 14px;
-        background: linear-gradient(120deg, #12d8a5, #08b68e);
-        color: #012519;
-        font-weight: 800;
-        padding: 0.74rem 1rem;
-        font-size: 0.93rem;
-        cursor: pointer;
-      }
-
-      .hero-btn:hover {
-        transform: translateY(-1px);
-      }
-
-      .hero-note {
-        margin: 0;
-        color: #d7e0ff;
-        font-size: 0.86rem;
-      }
-
-      .quick-badge {
-        margin-top: 0.8rem;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.22);
-        padding: 0.4rem 0.75rem;
-        background: rgba(255, 255, 255, 0.06);
-        color: #dce6ff;
-        font-size: 0.84rem;
-        font-weight: 700;
+        grid-template-columns: 1fr;
       }
 
       .draw {
-        position: relative;
-        min-height: 260px;
-      }
-
-      .ball {
-        position: absolute;
-        width: 66px;
-        height: 66px;
-        border-radius: 50%;
-        display: grid;
-        place-items: center;
-        font-family: "Outfit", sans-serif;
-        font-size: 1.22rem;
-        font-weight: 700;
-        color: #fff;
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
-        animation: floaty 3.6s ease-in-out infinite;
-      }
-
-      .ball.a {
-        left: 6%;
-        top: 11%;
-        background: linear-gradient(160deg, #4ca7ff, #2168ce);
-      }
-
-      .ball.b {
-        right: 15%;
-        top: 2%;
-        background: linear-gradient(160deg, #ff9f73, #dd5a31);
-        animation-delay: -0.5s;
-      }
-
-      .ball.c {
-        left: 0;
-        bottom: 28%;
-        background: linear-gradient(160deg, #8f98ff, #5f60d4);
-        animation-delay: -1.2s;
-      }
-
-      .ball.d {
-        right: 3%;
-        bottom: 23%;
-        background: linear-gradient(160deg, #3de0b3, #18a97f);
-        animation-delay: -2s;
-      }
-
-      .ball.e {
-        left: 30%;
-        bottom: 2%;
-        background: linear-gradient(160deg, #ffc165, #f39135);
-        animation-delay: -1.7s;
-      }
-
-      .ball.f {
-        right: 36%;
-        top: 40%;
-        background: linear-gradient(160deg, #ff7fa4, #e05282);
-        animation-delay: -0.9s;
-      }
-
-      @keyframes floaty {
-        0%,
-        100% {
-          transform: translateY(0);
-        }
-        50% {
-          transform: translateY(-12px);
-        }
-      }
-
-      .generator {
-        margin-top: 1rem;
-        padding: 1.15rem;
-      }
-
-      .generator-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: 0.8rem;
-      }
-
-      .generator-head h2,
-      .results-head h2 {
-        margin: 0;
-        font-family: "Outfit", sans-serif;
-        font-size: clamp(1.25rem, 2.5vw, 1.55rem);
-      }
-
-      .generator-head p,
-      .results-head p {
-        margin: 0;
-        color: var(--muted);
-        font-size: 0.89rem;
+        min-height: 220px;
+        order: -1;
       }
 
       .control-wrap {
-        margin-top: 0.9rem;
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 0.75rem;
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .shell {
+        width: min(1140px, 100% - 1rem);
       }
 
-      .control-card {
-        border-radius: 18px;
-        border: 1px solid var(--line);
-        background: rgba(255, 255, 255, 0.04);
-        padding: 0.78rem;
+      .header {
+        padding-inline: 0.1rem;
       }
 
-      .label {
-        margin-bottom: 0.4rem;
-        display: block;
-        font-weight: 700;
-        font-size: 0.85rem;
-        color: #dfebff;
-      }
-
-      .seg {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.35rem;
-      }
-
-      .seg button {
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        background: rgba(255, 255, 255, 0.02);
-        color: #dbe7ff;
-        border-radius: 12px;
-        padding: 0.56rem 0.58rem;
-        cursor: pointer;
-        font-weight: 700;
-        font-size: 0.84rem;
-      }
-
-      .seg button:hover {
-        border-color: var(--line-strong);
-      }
-
-      .seg button.is-active {
-        border-color: rgba(13, 210, 160, 0.55);
-        background: linear-gradient(120deg, rgba(13, 210, 160, 0.22), rgba(65, 243, 198, 0.12));
-        color: #c5ffef;
-      }
-
-      details {
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        background: rgba(255, 255, 255, 0.03);
-        padding: 0.56rem 0.68rem;
-      }
-
-      summary {
-        cursor: pointer;
-        font-weight: 700;
-        color: #deebff;
-        font-size: 0.86rem;
-      }
-
-      .advanced {
-        margin-top: 0.62rem;
-      }
-
-      .advanced input {
-        width: 100%;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        background: rgba(7, 12, 24, 0.76);
-        color: #fff;
-        border-radius: 10px;
-        padding: 0.56rem 0.62rem;
-        font: inherit;
-      }
-
-      .advanced input:focus {
-        outline: 2px solid var(--focus);
-        border-color: transparent;
-      }
-
-      .action-row {
-        margin-top: 0.8rem;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.58rem;
-      }
-
-      .btn {
-        border: 0;
-        border-radius: 13px;
-        cursor: pointer;
-        font-weight: 800;
-        font-size: 0.9rem;
-        padding: 0.7rem 0.95rem;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.45rem;
-      }
-
-      .btn-main {
-        background: var(--hero-gradient);
-        color: #0f1324;
-      }
-
-      .btn-sub {
-        background: rgba(255, 255, 255, 0.06);
-        color: #ecf1ff;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-      }
-
-      .btn:disabled {
-        opacity: 0.66;
-        cursor: progress;
-      }
-
-      .spinner {
-        width: 15px;
-        height: 15px;
-        border: 2px solid rgba(15, 19, 36, 0.3);
-        border-top-color: #0f1324;
-        border-radius: 50%;
-        animation: spin 0.9s linear infinite;
-      }
-
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      .status {
-        min-height: 1.25rem;
-        margin-top: 0.5rem;
-        font-size: 0.86rem;
-        color: #ffb9a5;
-        font-weight: 600;
-      }
-
-      .results {
-        margin-top: 1rem;
-        padding: 1.1rem;
-      }
-
-      .results-head {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 0.7rem;
-      }
-
-      .insight {
-        margin-top: 0.7rem;
-        border-radius: 14px;
-        border: 1px solid rgba(13, 210, 160, 0.35);
-        background: rgba(13, 210, 160, 0.12);
-        color: #c4ffef;
-        font-size: 0.86rem;
-        font-weight: 700;
-        padding: 0.52rem 0.7rem;
+      .header-nav {
+        display: none;
       }
 
       .cards {
-        margin-top: 0.85rem;
-        display: grid;
-        gap: 0.7rem;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
       }
 
-      .result-card {
-        border: 1px solid var(--line);
-        border-radius: 18px;
-        background: var(--surface-strong);
-        padding: 0.78rem;
-        display: grid;
-        gap: 0.62rem;
-        transform: translateY(14px);
-        opacity: 0;
-        animation: card-in 0.45s ease forwards;
+      .hero {
+        border-radius: 22px;
       }
 
-      @keyframes card-in {
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+      .panel {
+        border-radius: 20px;
       }
+    }
+  </style>
+</head>
 
-      .card-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
+<body>
+  <div class="orb-layer" aria-hidden="true">
+    <div class="orb one"></div>
+    <div class="orb two"></div>
+    <div class="orb three"></div>
+  </div>
 
-      .rank {
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.1);
-        padding: 0.18rem 0.55rem;
-        font-family: "Outfit", sans-serif;
-        font-size: 0.8rem;
-        font-weight: 700;
-      }
+  <main class="shell">
+    <header class="header">
+      <div class="brand">
+        <span class="brand-mark">🎱</span>
+        <span>LottoGoGo</span>
+      </div>
+      <nav class="header-nav">
+        <a href="#generate">번호 생성</a>
+        <a href="#results">추천 결과</a>
+        <a href="#notice">면책</a>
+      </nav>
+    </header>
 
-      .score-pill {
-        border-radius: 999px;
-        background: rgba(41, 212, 154, 0.14);
-        color: #9affd8;
-        border: 1px solid rgba(41, 212, 154, 0.35);
-        padding: 0.2rem 0.52rem;
-        font-size: 0.76rem;
-        font-weight: 700;
-      }
-
-      .number-line {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.36rem;
-      }
-
-      .num {
-        width: 38px;
-        height: 38px;
-        border-radius: 999px;
-        display: grid;
-        place-items: center;
-        font-family: "Outfit", sans-serif;
-        font-weight: 700;
-        font-size: 0.92rem;
-        color: #fff;
-      }
-
-      .range-1 {
-        background: linear-gradient(160deg, #5ab1ff, #1f72dd);
-      }
-
-      .range-2 {
-        background: linear-gradient(160deg, #12d9a7, #0e9f7d);
-      }
-
-      .range-3 {
-        background: linear-gradient(160deg, #fbbf5d, #dd7c2a);
-      }
-
-      .range-4 {
-        background: linear-gradient(160deg, #fa8cb3, #cf4f7c);
-      }
-
-      .range-5 {
-        background: linear-gradient(160deg, #8d96ff, #595bdb);
-      }
-
-      .meta {
-        display: grid;
-        gap: 0.45rem;
-      }
-
-      .meta-group {
-        display: flex;
-        gap: 0.36rem;
-        flex-wrap: wrap;
-      }
-
-      .chip {
-        border-radius: 999px;
-        font-size: 0.74rem;
-        font-weight: 700;
-        line-height: 1;
-        padding: 0.34rem 0.52rem;
-      }
-
-      .chip.tag {
-        background: rgba(255, 140, 102, 0.17);
-        border: 1px solid rgba(255, 140, 102, 0.33);
-        color: #ffc5b0;
-      }
-
-      .chip.reason {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        color: #e5eeff;
-      }
-
-      .meta-title {
-        font-size: 0.76rem;
-        font-weight: 700;
-        color: #9ab0d7;
-      }
-
-      .empty {
-        margin-top: 0.8rem;
-        border-radius: 16px;
-        border: 1px dashed rgba(255, 255, 255, 0.24);
-        padding: 1.1rem;
-        color: #c8d7f9;
-        text-align: center;
-        font-size: 0.9rem;
-      }
-
-      .cta {
-        margin-top: 1rem;
-        padding: 1.1rem;
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.8rem;
-      }
-
-      .cta p {
-        margin: 0;
-        font-size: 0.95rem;
-        color: #dce6ff;
-        font-weight: 600;
-      }
-
-      .pay {
-        text-decoration: none;
-        color: #0f1222;
-        background: linear-gradient(120deg, #ffab7e, #ff8053);
-        border-radius: 12px;
-        padding: 0.68rem 1rem;
-        font-weight: 900;
-      }
-
-      .notice {
-        margin-top: 1rem;
-        padding: 1rem 1.1rem;
-      }
-
-      .notice h3 {
-        margin: 0 0 0.6rem;
-        font-family: "Outfit", sans-serif;
-      }
-
-      .notice ul {
-        margin: 0;
-        padding-left: 1rem;
-        color: #bfcae4;
-      }
-
-      .notice li + li {
-        margin-top: 0.35rem;
-      }
-
-      :focus-visible {
-        outline: 2px solid var(--focus);
-        outline-offset: 2px;
-      }
-
-      @media (max-width: 980px) {
-        .hero {
-          grid-template-columns: 1fr;
-        }
-
-        .draw {
-          min-height: 220px;
-          order: -1;
-        }
-
-        .control-wrap {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      @media (max-width: 760px) {
-        .shell {
-          width: min(1140px, 100% - 1rem);
-        }
-
-        .header {
-          padding-inline: 0.1rem;
-        }
-
-        .header-nav {
-          display: none;
-        }
-
-        .cards {
-          grid-template-columns: 1fr;
-        }
-
-        .hero {
-          border-radius: 22px;
-        }
-
-        .panel {
-          border-radius: 20px;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="orb-layer" aria-hidden="true">
-      <div class="orb one"></div>
-      <div class="orb two"></div>
-      <div class="orb three"></div>
-    </div>
-
-    <main class="shell">
-      <header class="header">
-        <div class="brand">
-          <span class="brand-mark">🎱</span>
-          <span>LottoGoGo</span>
+    <section class="panel hero">
+      <div>
+        <p class="kicker">로또 통계 기반 확률 실험</p>
+        <h1><span class="gradient">확률 실험 기반</span><br />선택 보조 도구</h1>
+        <p class="sub">당첨을 보장하지 않습니다. 무근거 선택을 제거합니다.</p>
+        <div class="hero-actions">
+          <button id="start-btn" class="hero-btn" type="button">이번 주 번호 받기</button>
+          <p class="hero-note">무료 · 로그인 불필요 · 10초 내 결과</p>
         </div>
-        <nav class="header-nav">
-          <a href="#generate">번호 생성</a>
-          <a href="#results">추천 결과</a>
-          <a href="#notice">면책</a>
-        </nav>
-      </header>
+        <div id="percentile-badge" class="quick-badge" hidden></div>
+      </div>
 
-      <section class="panel hero">
-        <div>
-          <p class="kicker">로또 통계 기반 확률 실험</p>
-          <h1><span class="gradient">확률 실험 기반</span><br />선택 보조 도구</h1>
-          <p class="sub">당첨을 보장하지 않습니다. 무근거 선택을 제거합니다.</p>
-          <div class="hero-actions">
-            <button id="start-btn" class="hero-btn" type="button">이번 주 번호 받기</button>
-            <p class="hero-note">무료 · 로그인 불필요 · 10초 내 결과</p>
+      <div class="draw" aria-hidden="true" id="latest-draw-container">
+        <div class="ball-label" id="latest-round-label"
+          style="position:absolute; top:-30px; left:0; font-size:0.8rem; font-weight:700; color:var(--brand);">최신 전 회차
+          당첨번호</div>
+        <div class="ball a" id="ball-0">-</div>
+        <div class="ball b" id="ball-1">-</div>
+        <div class="ball c" id="ball-2">-</div>
+        <div class="ball d" id="ball-3">-</div>
+        <div class="ball e" id="ball-4">-</div>
+        <div class="ball f" id="ball-5">-</div>
+      </div>
+    </section>
+
+    <section class="panel generator" id="generate">
+      <div class="generator-head">
+        <h2>번호 생성하기</h2>
+        <p>한 번에 5개/10개 조합 생성</p>
+      </div>
+
+      <div class="control-wrap">
+        <div class="control-card">
+          <label class="label">Preset 선택</label>
+          <div class="seg" id="preset-seg">
+            <button type="button" class="is-active" data-preset="A">A · 보수적</button>
+            <button type="button" data-preset="B">B · 공격적</button>
           </div>
-          <div id="percentile-badge" class="quick-badge" hidden></div>
         </div>
 
-        <div class="draw" aria-hidden="true" id="latest-draw-container">
-          <div class="ball-label" id="latest-round-label" style="position:absolute; top:-30px; left:0; font-size:0.8rem; font-weight:700; color:var(--brand);">최신 전 회차 당첨번호</div>
-          <div class="ball a" id="ball-0">-</div>
-          <div class="ball b" id="ball-1">-</div>
-          <div class="ball c" id="ball-2">-</div>
-          <div class="ball d" id="ball-3">-</div>
-          <div class="ball e" id="ball-4">-</div>
-          <div class="ball f" id="ball-5">-</div>
-        </div>
-      </section>
-
-      <section class="panel generator" id="generate">
-        <div class="generator-head">
-          <h2>번호 생성하기</h2>
-          <p>한 번에 5개/10개 조합 생성</p>
-        </div>
-
-        <div class="control-wrap">
-          <div class="control-card">
-            <label class="label">Preset 선택</label>
-            <div class="seg" id="preset-seg">
-              <button type="button" class="is-active" data-preset="A">A · 보수적</button>
-              <button type="button" data-preset="B">B · 공격적</button>
-            </div>
+        <div class="control-card">
+          <label class="label">게임 수</label>
+          <div class="seg" id="games-seg">
+            <button type="button" class="is-active" data-games="5">5게임</button>
+            <button type="button" data-games="10">10게임</button>
           </div>
+        </div>
 
-          <div class="control-card">
-            <label class="label">게임 수</label>
-            <div class="seg" id="games-seg">
-              <button type="button" class="is-active" data-games="5">5게임</button>
-              <button type="button" data-games="10">10게임</button>
-            </div>
+        <div class="control-card">
+          <label class="label">🎯 추천 모델</label>
+          <div class="seg" id="model-seg">
+            <button type="button" class="is-active" data-model="ga">GA/엔진</button>
+            <button type="button" data-model="xgb">XGBoost AI</button>
           </div>
-
         </div>
 
-        <div class="action-row">
-          <button class="btn btn-main" id="run-btn" type="button">
-            <span id="run-icon">🎲</span>
-            <span id="run-text">추천 받기</span>
-          </button>
-          <button class="btn btn-sub" id="retry-btn" type="button">다시 추천</button>
-        </div>
+      </div>
 
-        <div id="status" class="status"></div>
-      </section>
+      <div class="action-row">
+        <button class="btn btn-main" id="run-btn" type="button">
+          <span id="run-icon">🎲</span>
+          <span id="run-text">추천 받기</span>
+        </button>
+        <button class="btn btn-sub" id="retry-btn" type="button">다시 추천</button>
+      </div>
 
-      <section class="panel results" id="results">
-        <div class="results-head">
-          <h2>추천 결과</h2>
-          <p id="result-count">아직 추천 전</p>
-        </div>
+      <div id="status" class="status"></div>
+    </section>
 
-        <div id="result-insight" class="insight" hidden></div>
+    <section class="panel results" id="results">
+      <div class="results-head">
+        <h2>추천 결과</h2>
+        <p id="result-count">아직 추천 전</p>
+      </div>
 
-        <div id="result-empty" class="empty">아직 추천 결과가 없습니다. 위에서 추천을 실행하세요.</div>
-        <div id="result-cards" class="cards" aria-live="polite"></div>
-      </section>
+      <div id="result-insight" class="insight" hidden></div>
 
-      <section class="panel cta">
-        <p>이 실험이 괜찮았다면 커피 한 잔으로 계속 실험할 수 있게 도와주세요 ☕</p>
-        <a class="pay" href="https://buymeacoffee.com/lottogogo" target="_blank" rel="noopener noreferrer">커피 한 잔 후원하기</a>
-      </section>
+      <div id="result-empty" class="empty">아직 추천 결과가 없습니다. 위에서 추천을 실행하세요.</div>
+      <div id="result-cards" class="cards" aria-live="polite"></div>
+    </section>
 
-      <section class="panel notice" id="notice">
-        <h3>면책</h3>
-        <ul>
-          <li>통계/실험 목적입니다.</li>
-          <li>당첨을 보장하지 않습니다.</li>
-          <li>구매 판단은 사용자 책임입니다.</li>
-        </ul>
-      </section>
-    </main>
+    <section class="panel cta">
+      <p>이 실험이 괜찮았다면 커피 한 잔으로 계속 실험할 수 있게 도와주세요 ☕</p>
+      <a class="pay" href="https://buymeacoffee.com/lottogogo" target="_blank" rel="noopener noreferrer">커피 한 잔 후원하기</a>
+    </section>
 
-    <script>
-      const state = {
-        preset: "A",
-        games: 5,
-      };
+    <section class="panel notice" id="notice">
+      <h3>면책</h3>
+      <ul>
+        <li>통계/실험 목적입니다.</li>
+        <li>당첨을 보장하지 않습니다.</li>
+        <li>구매 판단은 사용자 책임입니다.</li>
+      </ul>
+    </section>
+  </main>
 
-      const MODEL_URL = "/data/model.json";
-      const WORKER_URL = "/assets/recommend-worker.js";
-      const RECENT_STORAGE_KEY = "lottogogo_recent_combos_v1";
-      const RECENT_STORAGE_LIMIT = 120;
+  <script>
+    const state = {
+      preset: "A",
+      games: 5,
+      model: "ga",  // NEW: model selection
+    };
 
-      const TAG_LABELS = {
-        hmm_hot: "AI 흐름 강세",
-        hot: "최근 빈도 상승",
-        carryover: "직전 회차 연결",
-        carryover2: "최근 흐름 연장",
-        neighbor: "인접 패턴 확장",
-        reverse: "반전 대칭 후보",
-        hmm_cold: "잠복 구간 반등",
-        cold: "저출현 반등",
-        pattern: "데이터 패턴 통과",
-      };
+    const getModelURL = () => `/data/model_${state.model}.json`;
+    const WORKER_URL = "/assets/recommend-worker.js";
+    const RECENT_STORAGE_KEY = "lottogogo_recent_combos_v1";
+    const RECENT_STORAGE_LIMIT = 120;
 
-      const elements = {
-        startBtn: document.getElementById("start-btn"),
-        presetSeg: document.getElementById("preset-seg"),
-        gamesSeg: document.getElementById("games-seg"),
-        runBtn: document.getElementById("run-btn"),
-        runIcon: document.getElementById("run-icon"),
-        runText: document.getElementById("run-text"),
-        retryBtn: document.getElementById("retry-btn"),
-        status: document.getElementById("status"),
-        badge: document.getElementById("percentile-badge"),
-        resultCount: document.getElementById("result-count"),
-        resultInsight: document.getElementById("result-insight"),
-        resultEmpty: document.getElementById("result-empty"),
-        resultCards: document.getElementById("result-cards"),
-      };
+    const TAG_LABELS = {
+      hmm_hot: "AI 흐름 강세",
+      hot: "최근 빈도 상승",
+      carryover: "직전 회차 연결",
+      carryover2: "최근 흐름 연장",
+      neighbor: "인접 패턴 확장",
+      reverse: "반전 대칭 후보",
+      hmm_cold: "잠복 구간 반등",
+      cold: "저출현 반등",
+      pattern: "데이터 패턴 통과",
+    };
 
-      let engineWorker = null;
-      let workerReady = false;
-      let modelPromise = null;
-      let requestSeq = 0;
-      const pendingRequests = new Map();
+    const elements = {
+      startBtn: document.getElementById("start-btn"),
+      presetSeg: document.getElementById("preset-seg"),
+      gamesSeg: document.getElementById("games-seg"),
+      modelSeg: document.getElementById("model-seg"),  // NEW
+      runBtn: document.getElementById("run-btn"),
+      runIcon: document.getElementById("run-icon"),
+      runText: document.getElementById("run-text"),
+      retryBtn: document.getElementById("retry-btn"),
+      status: document.getElementById("status"),
+      badge: document.getElementById("percentile-badge"),
+      resultCount: document.getElementById("result-count"),
+      resultInsight: document.getElementById("result-insight"),
+      resultEmpty: document.getElementById("result-empty"),
+      resultCards: document.getElementById("result-cards"),
+    };
 
-      elements.startBtn.addEventListener("click", () => {
-        document.getElementById("generate").scrollIntoView({ behavior: "smooth", block: "start" });
-      });
+    let engineWorker = null;
+    let workerReady = false;
+    let modelPromise = null;
+    let requestSeq = 0;
+    const pendingRequests = new Map();
 
-      elements.presetSeg.addEventListener("click", (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLButtonElement)) return;
-        const preset = target.dataset.preset;
-        if (!preset) return;
-        state.preset = preset;
-        for (const button of elements.presetSeg.querySelectorAll("button")) {
-          button.classList.toggle("is-active", button === target);
-        }
-      });
+    elements.startBtn.addEventListener("click", () => {
+      document.getElementById("generate").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
 
-      elements.gamesSeg.addEventListener("click", (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLButtonElement)) return;
-        const games = target.dataset.games;
-        if (!games) return;
-        state.games = Number(games);
-        for (const button of elements.gamesSeg.querySelectorAll("button")) {
-          button.classList.toggle("is-active", button === target);
-        }
-      });
+    elements.presetSeg.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLButtonElement)) return;
+      const preset = target.dataset.preset;
+      if (!preset) return;
+      state.preset = preset;
+      for (const button of elements.presetSeg.querySelectorAll("button")) {
+        button.classList.toggle("is-active", button === target);
+      }
+    });
 
-      elements.runBtn.addEventListener("click", () => requestRecommend());
-      elements.retryBtn.addEventListener("click", () => requestRecommend());
+    elements.gamesSeg.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLButtonElement)) return;
+      const games = target.dataset.games;
+      if (!games) return;
+      state.games = Number(games);
+      for (const button of elements.gamesSeg.querySelectorAll("button")) {
+        button.classList.toggle("is-active", button === target);
+      }
+    });
 
-      setStatus("모델 준비 중입니다...");
-      bootstrapEngine();
+    elements.runBtn.addEventListener("click", () => requestRecommend());
+    elements.retryBtn.addEventListener("click", () => requestRecommend());
 
-      async function bootstrapEngine() {
-        try {
-          await ensureWorkerReady();
-          setStatus("준비 완료. 추천 버튼을 누르면 즉시 생성합니다.");
-        } catch (error) {
-          setStatus(
-            error instanceof Error
-              ? `모델 초기화 실패: ${error.message}`
-              : "모델 초기화 실패"
-          );
-        }
+    setStatus("모델 준비 중입니다...");
+    bootstrapEngine();
+
+    async function bootstrapEngine() {
+      try {
+        await ensureWorkerReady();
+        setStatus("준비 완료. 추천 버튼을 누르면 즉시 생성합니다.");
+      } catch (error) {
+        setStatus(
+          error instanceof Error
+            ? `모델 초기화 실패: ${error.message}`
+            : "모델 초기화 실패"
+        );
+      }
+    }
+
+    async function requestRecommend() {
+      setLoading(true);
+      setStatus("조합 생성 중입니다...");
+
+      try {
+        await ensureWorkerReady();
+        const result = await generateWithWorker({
+          preset: state.preset,
+          games: state.games,
+          recentKeys: readRecentKeys(),
+        });
+        renderResult(result);
+        saveRecentKeysFromResult(result);
+        const attempts = Number(result?.debug?.attempts || 0);
+        setStatus(
+          attempts > 0
+            ? `추천 결과를 갱신했습니다. (${attempts.toLocaleString("ko-KR")}회 탐색)`
+            : "추천 결과를 갱신했습니다."
+        );
+      } catch (error) {
+        setStatus(
+          error instanceof Error
+            ? `지금은 결과를 생성하지 못했습니다: ${error.message}`
+            : "지금은 결과를 생성하지 못했습니다"
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function ensureWorkerReady() {
+      if (workerReady && engineWorker) return;
+      if (!engineWorker) {
+        engineWorker = new Worker(WORKER_URL);
+        engineWorker.addEventListener("message", onWorkerMessage);
+        engineWorker.addEventListener("error", onWorkerError);
       }
 
-      async function requestRecommend() {
-        setLoading(true);
-        setStatus("조합 생성 중입니다...");
+      const model = await loadModel();
+      const initResult = await sendWorkerRequest("init", { model }, 12000);
+      if (!initResult || initResult.type !== "inited") {
+        throw new Error("worker initialization failed");
+      }
+      workerReady = true;
+    }
 
-        try {
-          await ensureWorkerReady();
-          const result = await generateWithWorker({
-            preset: state.preset,
-            games: state.games,
-            recentKeys: readRecentKeys(),
-          });
-          renderResult(result);
-          saveRecentKeysFromResult(result);
-          const attempts = Number(result?.debug?.attempts || 0);
-          setStatus(
-            attempts > 0
-              ? `추천 결과를 갱신했습니다. (${attempts.toLocaleString("ko-KR")}회 탐색)`
-              : "추천 결과를 갱신했습니다."
-          );
-        } catch (error) {
-          setStatus(
-            error instanceof Error
-              ? `지금은 결과를 생성하지 못했습니다: ${error.message}`
-              : "지금은 결과를 생성하지 못했습니다"
-          );
-        } finally {
-          setLoading(false);
-        }
+    function onWorkerMessage(event) {
+      const message = event.data || {};
+      const requestId = message.requestId;
+      if (!requestId) return;
+
+      const pending = pendingRequests.get(requestId);
+      if (!pending) return;
+
+      pendingRequests.delete(requestId);
+      window.clearTimeout(pending.timerId);
+
+      if (message.type === "error") {
+        pending.reject(new Error(message.message || "worker error"));
+        return;
       }
 
-      async function ensureWorkerReady() {
-        if (workerReady && engineWorker) return;
-        if (!engineWorker) {
-          engineWorker = new Worker(WORKER_URL);
-          engineWorker.addEventListener("message", onWorkerMessage);
-          engineWorker.addEventListener("error", onWorkerError);
-        }
+      pending.resolve(message);
+    }
 
-        const model = await loadModel();
-        const initResult = await sendWorkerRequest("init", { model }, 12000);
-        if (!initResult || initResult.type !== "inited") {
-          throw new Error("worker initialization failed");
-        }
-        workerReady = true;
-      }
-
-      function onWorkerMessage(event) {
-        const message = event.data || {};
-        const requestId = message.requestId;
-        if (!requestId) return;
-
-        const pending = pendingRequests.get(requestId);
-        if (!pending) return;
-
-        pendingRequests.delete(requestId);
+    function onWorkerError(event) {
+      for (const pending of pendingRequests.values()) {
         window.clearTimeout(pending.timerId);
+        pending.reject(new Error(event?.message || "worker crashed"));
+      }
+      pendingRequests.clear();
+    }
 
-        if (message.type === "error") {
-          pending.reject(new Error(message.message || "worker error"));
-          return;
-        }
+    async function generateWithWorker(payload) {
+      const message = await sendWorkerRequest("generate", payload, 20000);
+      if (message.type !== "result" || !message.payload) {
+        throw new Error("worker result payload is invalid");
+      }
+      return message.payload;
+    }
 
-        pending.resolve(message);
+    function sendWorkerRequest(type, payload, timeoutMs) {
+      if (!engineWorker) {
+        return Promise.reject(new Error("worker not ready"));
       }
 
-      function onWorkerError(event) {
-        for (const pending of pendingRequests.values()) {
-          window.clearTimeout(pending.timerId);
-          pending.reject(new Error(event?.message || "worker crashed"));
+      const requestId = `${type}-${Date.now()}-${requestSeq++}`;
+      return new Promise((resolve, reject) => {
+        const timerId = window.setTimeout(() => {
+          pendingRequests.delete(requestId);
+          reject(new Error("요청 시간이 초과되었습니다. 다시 시도해주세요."));
+        }, timeoutMs);
+
+        pendingRequests.set(requestId, { resolve, reject, timerId });
+        engineWorker.postMessage({ type, requestId, ...payload });
+      });
+    }
+
+    async function loadModel() {
+      if (modelPromise) return modelPromise;
+
+      modelPromise = fetch(MODEL_URL, { cache: "no-store" }).then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`model.json 로드 실패 (${response.status})`);
         }
-        pendingRequests.clear();
+
+        const parsed = await response.json();
+        if (!parsed || typeof parsed !== "object" || !parsed.presets) {
+          throw new Error("model.json 형식이 올바르지 않습니다.");
+        }
+
+        // Render latest draw results in hero section
+        renderHeroLatestDraw(parsed);
+
+        return parsed;
+      });
+
+      return modelPromise;
+    }
+
+    function readRecentKeys() {
+      try {
+        const raw = window.localStorage.getItem(RECENT_STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.map((value) => String(value)).slice(0, RECENT_STORAGE_LIMIT);
+      } catch (_error) {
+        return [];
+      }
+    }
+
+    function saveRecentKeysFromResult(data) {
+      const rows = Array.isArray(data?.recommendations) ? data.recommendations : [];
+      if (!rows.length) return;
+
+      const existing = readRecentKeys();
+      const merged = [...existing];
+
+      for (const row of rows) {
+        const numbers = Array.isArray(row?.numbers) ? row.numbers.map((value) => Number(value)) : [];
+        if (numbers.length !== 6 || numbers.some((value) => !Number.isFinite(value))) continue;
+        const key = numbers.join("-");
+        merged.unshift(key);
       }
 
-      async function generateWithWorker(payload) {
-        const message = await sendWorkerRequest("generate", payload, 20000);
-        if (message.type !== "result" || !message.payload) {
-          throw new Error("worker result payload is invalid");
-        }
-        return message.payload;
+      const unique = [...new Set(merged)].slice(0, RECENT_STORAGE_LIMIT);
+      try {
+        window.localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(unique));
+      } catch (_error) {
+        // Ignore localStorage quota errors.
+      }
+    }
+
+    function renderResult(data) {
+      const rows = Array.isArray(data?.recommendations) ? data.recommendations : [];
+
+      if (!rows.length) {
+        elements.resultCards.innerHTML = "";
+        elements.resultEmpty.hidden = false;
+        elements.resultCount.textContent = "추천 결과 없음";
+        elements.resultInsight.hidden = true;
+        elements.badge.hidden = true;
+        return;
       }
 
-      function sendWorkerRequest(type, payload, timeoutMs) {
-        if (!engineWorker) {
-          return Promise.reject(new Error("worker not ready"));
-        }
-
-        const requestId = `${type}-${Date.now()}-${requestSeq++}`;
-        return new Promise((resolve, reject) => {
-          const timerId = window.setTimeout(() => {
-            pendingRequests.delete(requestId);
-            reject(new Error("요청 시간이 초과되었습니다. 다시 시도해주세요."));
-          }, timeoutMs);
-
-          pendingRequests.set(requestId, { resolve, reject, timerId });
-          engineWorker.postMessage({ type, requestId, ...payload });
-        });
+      const percentile = data?.meta?.percentile;
+      if (typeof percentile === "number") {
+        elements.badge.hidden = false;
+        elements.badge.textContent = `이번 설정: 과거 기준 상위 ${percentile}%`;
+        elements.resultInsight.hidden = false;
+        elements.resultInsight.textContent = `현재 설정은 과거 데이터 기준 상위 ${percentile}% 구간의 안정성을 보였습니다.`;
+      } else {
+        elements.badge.hidden = true;
+        elements.resultInsight.hidden = true;
+        elements.resultInsight.textContent = "";
       }
 
-      async function loadModel() {
-        if (modelPromise) return modelPromise;
+      const scores = rows.map((item) => Number(item.score ?? 0));
+      const minScore = Math.min(...scores);
+      const maxScore = Math.max(...scores);
 
-        modelPromise = fetch(MODEL_URL, { cache: "no-store" }).then(async (response) => {
-          if (!response.ok) {
-            throw new Error(`model.json 로드 실패 (${response.status})`);
-          }
+      elements.resultCount.textContent = `${rows.length}개 추천 완료`;
+      elements.resultEmpty.hidden = true;
 
-          const parsed = await response.json();
-          if (!parsed || typeof parsed !== "object" || !parsed.presets) {
-            throw new Error("model.json 형식이 올바르지 않습니다.");
-          }
-          
-          // Render latest draw results in hero section
-          renderHeroLatestDraw(parsed);
-          
-          return parsed;
-        });
+      elements.resultCards.innerHTML = rows
+        .map((item, index) => {
+          const numbers = Array.isArray(item.numbers) ? item.numbers : [];
+          const score = Number(item.score ?? 0);
+          const scorePoint = normalizeScore(score, minScore, maxScore);
+          const tags = formatTags(item.tags);
+          const reasons = formatReasons(item.reasons);
 
-        return modelPromise;
-      }
-
-      function readRecentKeys() {
-        try {
-          const raw = window.localStorage.getItem(RECENT_STORAGE_KEY);
-          if (!raw) return [];
-          const parsed = JSON.parse(raw);
-          if (!Array.isArray(parsed)) return [];
-          return parsed.map((value) => String(value)).slice(0, RECENT_STORAGE_LIMIT);
-        } catch (_error) {
-          return [];
-        }
-      }
-
-      function saveRecentKeysFromResult(data) {
-        const rows = Array.isArray(data?.recommendations) ? data.recommendations : [];
-        if (!rows.length) return;
-
-        const existing = readRecentKeys();
-        const merged = [...existing];
-
-        for (const row of rows) {
-          const numbers = Array.isArray(row?.numbers) ? row.numbers.map((value) => Number(value)) : [];
-          if (numbers.length !== 6 || numbers.some((value) => !Number.isFinite(value))) continue;
-          const key = numbers.join("-");
-          merged.unshift(key);
-        }
-
-        const unique = [...new Set(merged)].slice(0, RECENT_STORAGE_LIMIT);
-        try {
-          window.localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(unique));
-        } catch (_error) {
-          // Ignore localStorage quota errors.
-        }
-      }
-
-      function renderResult(data) {
-        const rows = Array.isArray(data?.recommendations) ? data.recommendations : [];
-
-        if (!rows.length) {
-          elements.resultCards.innerHTML = "";
-          elements.resultEmpty.hidden = false;
-          elements.resultCount.textContent = "추천 결과 없음";
-          elements.resultInsight.hidden = true;
-          elements.badge.hidden = true;
-          return;
-        }
-
-        const percentile = data?.meta?.percentile;
-        if (typeof percentile === "number") {
-          elements.badge.hidden = false;
-          elements.badge.textContent = `이번 설정: 과거 기준 상위 ${percentile}%`;
-          elements.resultInsight.hidden = false;
-          elements.resultInsight.textContent = `현재 설정은 과거 데이터 기준 상위 ${percentile}% 구간의 안정성을 보였습니다.`;
-        } else {
-          elements.badge.hidden = true;
-          elements.resultInsight.hidden = true;
-          elements.resultInsight.textContent = "";
-        }
-
-        const scores = rows.map((item) => Number(item.score ?? 0));
-        const minScore = Math.min(...scores);
-        const maxScore = Math.max(...scores);
-
-        elements.resultCount.textContent = `${rows.length}개 추천 완료`;
-        elements.resultEmpty.hidden = true;
-
-        elements.resultCards.innerHTML = rows
-          .map((item, index) => {
-            const numbers = Array.isArray(item.numbers) ? item.numbers : [];
-            const score = Number(item.score ?? 0);
-            const scorePoint = normalizeScore(score, minScore, maxScore);
-            const tags = formatTags(item.tags);
-            const reasons = formatReasons(item.reasons);
-
-            return `
+          return `
               <article class="result-card" style="animation-delay:${index * 60}ms">
                 <div class="card-top">
                   <span class="rank">추천 ${index + 1}</span>
@@ -1197,118 +1208,119 @@
                 </div>
               </article>
             `;
-          })
-          .join("");
-      }
+        })
+        .join("");
+    }
 
-      function formatTags(rawTags) {
-        const tags = Array.isArray(rawTags) ? rawTags : [];
-        const labels = tags.map((tag) => TAG_LABELS[tag] || "데이터 패턴 통과");
-        const unique = [...new Set(labels)].slice(0, 3);
-        return unique.length ? unique : ["데이터 패턴 통과"];
-      }
+    function formatTags(rawTags) {
+      const tags = Array.isArray(rawTags) ? rawTags : [];
+      const labels = tags.map((tag) => TAG_LABELS[tag] || "데이터 패턴 통과");
+      const unique = [...new Set(labels)].slice(0, 3);
+      return unique.length ? unique : ["데이터 패턴 통과"];
+    }
 
-      function formatReasons(rawReasons) {
-        const reasons = Array.isArray(rawReasons) ? rawReasons : [];
-        const mapped = reasons.map((reason) => toFriendlyReason(reason));
-        const unique = [...new Set(mapped)].slice(0, 3);
-        return unique.length ? unique : ["통계 필터를 통과한 조합"];
-      }
+    function formatReasons(rawReasons) {
+      const reasons = Array.isArray(rawReasons) ? rawReasons : [];
+      const mapped = reasons.map((reason) => toFriendlyReason(reason));
+      const unique = [...new Set(mapped)].slice(0, 3);
+      return unique.length ? unique : ["통계 필터를 통과한 조합"];
+    }
 
-      function toFriendlyReason(reasonText) {
-        const value = String(reasonText || "");
+    function toFriendlyReason(reasonText) {
+      const value = String(reasonText || "");
 
-        if (value.startsWith("AC>=")) return "번호 간 간격 다양성 확보";
-        if (value.startsWith("sum ")) return "총합 밸런스 구간 유지";
-        if (value.startsWith("zone<=")) return "구간 쏠림 완화";
-        if (value.startsWith("odd ")) return "홀짝 비율 균형";
-        if (value.startsWith("high ")) return "고저 비율 균형";
-        if (value.includes("history overlap")) return "과거 고중복 조합 배제";
-        if (value.startsWith("carryover<=")) return "최근 회차 과반영 방지";
+      if (value.startsWith("AC>=")) return "번호 간 간격 다양성 확보";
+      if (value.startsWith("sum ")) return "총합 밸런스 구간 유지";
+      if (value.startsWith("zone<=")) return "구간 쏠림 완화";
+      if (value.startsWith("odd ")) return "홀짝 비율 균형";
+      if (value.startsWith("high ")) return "고저 비율 균형";
+      if (value.includes("history overlap")) return "과거 고중복 조합 배제";
+      if (value.startsWith("carryover<=")) return "최근 회차 과반영 방지";
 
-        return "핵심 필터 조건 충족";
-      }
+      return "핵심 필터 조건 충족";
+    }
 
-      function renderBall(number) {
-        const n = Number(number);
-        if (!Number.isFinite(n)) return "";
+    function renderBall(number) {
+      const n = Number(number);
+      if (!Number.isFinite(n)) return "";
 
-        return `<span class="num ${getRangeClass(n)}">${escapeHtml(String(n))}</span>`;
-      }
+      return `<span class="num ${getRangeClass(n)}">${escapeHtml(String(n))}</span>`;
+    }
 
-      function getRangeClass(number) {
-        if (number <= 10) return "range-1";
-        if (number <= 20) return "range-2";
-        if (number <= 30) return "range-3";
-        if (number <= 40) return "range-4";
-        return "range-5";
-      }
+    function getRangeClass(number) {
+      if (number <= 10) return "range-1";
+      if (number <= 20) return "range-2";
+      if (number <= 30) return "range-3";
+      if (number <= 40) return "range-4";
+      return "range-5";
+    }
 
-      function normalizeScore(score, minScore, maxScore) {
-        if (!Number.isFinite(score)) return 70;
-        if (maxScore <= minScore) return 82;
+    function normalizeScore(score, minScore, maxScore) {
+      if (!Number.isFinite(score)) return 70;
+      if (maxScore <= minScore) return 82;
 
-        const ratio = (score - minScore) / (maxScore - minScore);
-        return Math.round(68 + ratio * 30);
-      }
+      const ratio = (score - minScore) / (maxScore - minScore);
+      return Math.round(68 + ratio * 30);
+    }
 
-      function escapeHtml(value) {
-        return String(value)
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;")
-          .replaceAll("'", "&#39;");
-      }
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
 
-      function renderHeroLatestDraw(model) {
-        try {
-          const latestRound = model.source?.latest_round;
-          const draws = model.history?.draws;
-          if (!latestRound || !draws || !draws.length) return;
-          
-          const latestNumbers = draws[draws.length - 1];
-          if (!latestNumbers || latestNumbers.length < 6) return;
+    function renderHeroLatestDraw(model) {
+      try {
+        const latestRound = model.source?.latest_round;
+        const draws = model.history?.draws;
+        if (!latestRound || !draws || !draws.length) return;
 
-          const roundLabel = document.getElementById("latest-round-label");
-          if (roundLabel) {
-            roundLabel.textContent = `${latestRound}회차 당첨번호`;
-          }
+        const latestNumbers = draws[draws.length - 1];
+        if (!latestNumbers || latestNumbers.length < 6) return;
 
-          for (let i = 0; i < 6; i++) {
-            const ball = document.getElementById(`ball-${i}`);
-            if (ball) {
-              const num = latestNumbers[i];
-              ball.textContent = num;
-              // Re-apply range class based on number
-              ball.className = `ball ${getBallPosClass(i)} ${getRangeClass(num)}`;
-            }
-          }
-        } catch (e) {
-          console.error("Failed to render hero latest draw:", e);
+        const roundLabel = document.getElementById("latest-round-label");
+        if (roundLabel) {
+          roundLabel.textContent = `${latestRound}회차 당첨번호`;
         }
-      }
 
-      function getBallPosClass(index) {
-        return ["a", "b", "c", "d", "e", "f"][index] || "a";
-      }
-
-      function setStatus(message) {
-        elements.status.textContent = message;
-      }
-
-      function setLoading(loading) {
-        elements.runBtn.disabled = loading;
-        elements.retryBtn.disabled = loading;
-
-        if (loading) {
-          elements.runIcon.innerHTML = '<span class="spinner" aria-hidden="true"></span>';
-          elements.runText.textContent = "생성 중...";
-        } else {
-          elements.runIcon.textContent = "🎲";
-          elements.runText.textContent = "추천 받기";
+        for (let i = 0; i < 6; i++) {
+          const ball = document.getElementById(`ball-${i}`);
+          if (ball) {
+            const num = latestNumbers[i];
+            ball.textContent = num;
+            // Re-apply range class based on number
+            ball.className = `ball ${getBallPosClass(i)} ${getRangeClass(num)}`;
+          }
         }
+      } catch (e) {
+        console.error("Failed to render hero latest draw:", e);
       }
-    </script>
-  </body>
+    }
+
+    function getBallPosClass(index) {
+      return ["a", "b", "c", "d", "e", "f"][index] || "a";
+    }
+
+    function setStatus(message) {
+      elements.status.textContent = message;
+    }
+
+    function setLoading(loading) {
+      elements.runBtn.disabled = loading;
+      elements.retryBtn.disabled = loading;
+
+      if (loading) {
+        elements.runIcon.innerHTML = '<span class="spinner" aria-hidden="true"></span>';
+        elements.runText.textContent = "생성 중...";
+      } else {
+        elements.runIcon.textContent = "🎲";
+        elements.runText.textContent = "추천 받기";
+      }
+    }
+  </script>
+</body>
+
 </html>
