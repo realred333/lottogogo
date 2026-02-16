@@ -8,8 +8,9 @@
 - `Render` 의존 제거
 - `Vercel + GitHub Actions` 중심 운영
 - 매 요청 서버 계산 대신:
-  - 주간 배치에서 `history.csv` + `model.json` 갱신
+  - 주간 배치에서 `history.csv` + `model_ga.json` + `model_xgb.json` 갱신
   - 프론트에서 Web Worker로 즉시 조합 생성/필터링
+  - **사용자가 GA/엔진과 XGBoost 모델 중 선택 가능**
 
 ---
 
@@ -189,10 +190,16 @@ src/lottogogo/
     static/index.html
 
 data/
-  model.json
+  model_ga.json                # GA/엔진 기반 모델 (기본값)
+  model_xgb.json               # XGBoost AI 기반 모델
+  model.json                   # 레거시 호환용 (GA 모델 복사본)
+  optimized_weights.json       # GA 최적화 가중치
+  xgb_model.pkl                # XGBoost 학습 모델 (캐시)
+  xgb_model_metadata.json      # XGBoost 모델 메타데이터 (회차 추적)
 
-recommend.py                 # CLI 추천기
-backtest.py                  # CLI 백테스트
+recommend.py                   # CLI 추천기 (GA/엔진 기반)
+recommend_ml.py                # CLI 추천기 (XGBoost 머신러닝)
+backtest.py                    # CLI 백테스트
 history.csv
 index.html
 vercel.json
@@ -216,14 +223,70 @@ uv run pytest -q
 
 ### 3) 추천 번호 생성
 
+#### 방법 1: XGBoost AI 추천 (머신러닝)
+
 ```bash
-uv run recommend.py --games 5 --weights data/optimized_weights.json
+# 기본 가중치로 실행
+uv run python recommend_ml.py --games 5
+
+# GA 최적화 가중치로 실행
+uv run python recommend_ml.py --games 5 --weights data/optimized_weights.json
 ```
+
+**특징:**
+- XGBoost 모델이 과거 패턴을 학습하여 번호 확률 예측
+- 28개 특징(Feature) 기반 의사결정 나무 앙상블
+- **스마트 캐싱**: 첫 실행 시 학습(~3분), 이후 실행 시 캐시 로드(~8초)
+- 새 회차 추가 시 자동 재학습
+- **가중치 지원**: GA 최적화 가중치를 특징 추출에 적용 가능
 
 | 옵션 | 기본값 | 설명 |
 |------|--------|------|
 | `--csv` | `history.csv` | 과거 추첨 데이터 CSV |
-| `--games` | `5` | 추천할 게임 세 수 |
+| `--games` | `5` | 추천할 게임 수 |
+| `--seed` | `None` | 생성 시드 |
+| `--weights` | `None` | 최적화 가중치 JSON 경로 (특징 추출에 적용) |
+
+**가중치 사용 시 동작:**
+- 가중치 파일이 변경되면 모델 자동 재학습
+- Hot/Cold/Carryover 등의 특징 계산에 가중치 반영
+- XGBoost가 "조정된 특징"을 학습하여 더 나은 예측 가능
+
+출력 예시:
+```
+🧠 XGBoost 모델 준비 중...
+   ✅ 저장된 모델 로드 (학습 회차: 1211회, 학습 시각: 2026-02-16 17:41:10)
+   ⚡ 재학습 생략 (최신 데이터와 일치)
+
+📊 예측 확률 상위 15개:
+     번호 |    예측 확률 |     샘플링 확률
+   -----+----------+-----------
+     19 |   0.5684 |     2.83%
+      9 |   0.5548 |     2.76%
+      4 |   0.5188 |     2.61%
+   ...
+
+🎯 1212회 추천 번호 (5게임)
+  1게임: [ 4,  9, 10, 19, 36, 42]
+         합계: 120 | 홀수: 2개 | 평균 예측확률: 0.5250
+  ...
+```
+
+#### 방법 2: GA/엔진 추천 (가중치 기반)
+
+```bash
+uv run python recommend.py --games 5 --weights data/optimized_weights.json
+```
+
+**특징:**
+- 가중치 선형 합산 방식 (Hot/Cold/Neighbor 등)
+- GA로 최적화된 가중치 적용 가능
+- 빠르고 해석 가능한 규칙 기반 접근
+
+| 옵션 | 기본값 | 설명 |
+|------|--------|------|
+| `--csv` | `history.csv` | 과거 추첨 데이터 CSV |
+| `--games` | `5` | 추천할 게임 수 |
 | `--seed` | `None` | 생성 시드 |
 | `--weights` | `None` | 가중치 JSON 경로 (생략 시 기본값 사용) |
 
@@ -319,6 +382,8 @@ Optimized Weights:
 
 XGBoost로 동일 지표를 비교하여 GA 결과의 유효성을 검증합니다.
 
+#### 성능 비교 (백테스트)
+
 ```bash
 uv run python -m lottogogo.tuning.xgb_ranker \
   --csv history.csv \
@@ -347,6 +412,19 @@ Feature Importance (top 10):
 - GA와 XGBoost의 `hit@K` 비교 → GA가 우수하면 가중치 기반 접근이 유효
 - Feature Importance → 어떤 엔진 모듈이 예측에 가장 기여하는지 확인
 
+#### 실전 추천 (XGBoost)
+
+백테스트 결과가 만족스럽다면 `recommend_ml.py`로 실제 번호를 추천받을 수 있습니다:
+
+```bash
+uv run python recommend_ml.py --games 5
+```
+
+**스마트 캐싱:**
+- 첫 실행: 모델 학습 후 `data/xgb_model.pkl`에 저장 (~3분)
+- 이후 실행: 캐시된 모델 로드 (~8초)
+- 새 회차 추가 시 자동 재학습
+
 ### 7) 데이터 업데이트 (증분)
 
 ```bash
@@ -356,7 +434,10 @@ uv run python scripts/update_history_csv.py --csv history.csv --workers 8
 ### 8) 프론트 모델 생성
 
 ```bash
-uv run python scripts/build_frontend_model.py --history-csv history.csv --output data/model.json
+uv run python scripts/build_frontend_model.py \
+  --history-csv history.csv \
+  --output-ga data/model_ga.json \
+  --output-xgb data/model_xgb.json
 ```
 
 ---
@@ -370,8 +451,8 @@ uv run python scripts/build_frontend_model.py --history-csv history.csv --output
 
 동작:
 1. `history.csv` 증분 업데이트
-2. `data/model.json` 재생성 (preset별 100k)
-3. 두 파일 중 변경이 있을 때만 커밋
+2. `data/model_ga.json` 및 `data/model_xgb.json` 재생성
+3. 파일 변경 시에만 커밋 (중복 커밋 방지)
 
 #### 주간 가중치 최적화: `.github/workflows/ga-optimize.yml`
 
@@ -383,14 +464,20 @@ uv run python scripts/build_frontend_model.py --history-csv history.csv --output
 
 ## 프론트 동작 상세
 
-- 버튼 클릭 시 메인 스레드는 즉시 반환, 계산은 Worker에서 수행
-- Worker가 확률 샘플링 → 필터 → 점수화 → 다양성 선택
+- **모델 선택**: 사용자가 GA/엔진과 XGBoost 중 선택 가능
+  - 선택 시 해당 JSON 파일(`model_ga.json` 또는 `model_xgb.json`) 동적 로드
+  - Worker 재초기화 후 즉시 반영
+- **Worker 처리**:
+  - 버튼 클릭 시 UI 스레드 차단 없이 백그라운드 계산
+  - 확률 샘플링 → 필터 → 점수화 → 다양성 선택
 - 최근 추천 재노출 완화: `localStorage` 활용
 - 결과 없을 때 fallback 경로로 무한 대기 방지
 
 ---
 
 ## 현재 파라미터 설정
+
+### 엔진 파라미터
 
 | 파라미터 | 값 | 설명 |
 |---------|-----|------|
@@ -406,6 +493,17 @@ uv run python scripts/build_frontend_model.py --history-csv history.csv --output
 | Min prob floor | `0.005` | 최소 확률 바닥 |
 | Sample size | `100,000` | 조합 생성 수 |
 | Max carryover | `2` | 이월수 최대 허용 수 |
+
+### XGBoost 파라미터
+
+| 파라미터 | 값 | 설명 |
+|---------|-----|------|
+| Features | `28` | 입력 특징 수 (base_score, hot_boost 등) |
+| Max depth | `6` | 트리 최대 깊이 |
+| Learning rate | `0.1` | 학습률 |
+| N estimators | `200` | 트리 개수 |
+| Cache file | `data/xgb_model.pkl` | 모델 저장 경로 |
+| Metadata | `data/xgb_model_metadata.json` | 회차 추적 메타데이터 |
 
 ---
 
