@@ -1,25 +1,23 @@
 {
   "cycle_label": "ga-weight-optimization-20260215",
-  "optimized_at": "2026-02-16T00:54:44+0900",
+  "optimized_at": "2026-02-16T16:45:19+0900",
   "weights": {
-    "hot_weight": 0.21863797480360336,
-    "cold_weight": 0.25267764405168114,
-    "neighbor_weight": 0.026535969683863625,
-    "carryover_weight": 0.24145206735003952,
-    "reverse_weight": 0.3249422188897616,
-    "hmm_hot_boost": 0.5449414806032167,
-    "hmm_cold_boost": 0.11022031102034835,
-    "poisson_lambda": 0.2689899114266129,
-    "markov_lambda": 0.3570796294968262,
-    "temperature": 0.13436838201257711
+    "hot_weight": 0.7297980817739331,
+    "cold_weight": 0.3928757437868233,
+    "neighbor_weight": 0.8908364933613351,
+    "carryover_weight": 0.2226836424479161,
+    "reverse_weight": 0.4393978020118939,
+    "poisson_lambda": 0.3584857004888406,
+    "markov_lambda": 0.1237911534222189,
+    "temperature": 0.10205953251457589
   },
   "fitness": {
-    "hit_at_15": 2.2,
-    "hit_at_20": 2.74,
-    "mean_rank": 22.35333333333333,
-    "train_fitness": 2.55,
-    "val_fitness": 2.2,
-    "combined_fitness": 2.41
+    "hit_at_15": 1.9536423841059603,
+    "hit_at_20": 2.6556291390728477,
+    "mean_rank": 23.33112582781457,
+    "train_fitness": 2.3,
+    "val_fitness": 1.9536423841059603,
+    "combined_fitness": 1.9449742457689476
   },
   "baseline": {
     "hit_at_15": 2.0,

@@ -61,7 +61,7 @@ FEATURE_NAMES = [
 class FeatureBuilder:
     """Build feature matrices for XGBoost from engine outputs."""
 
-    def __init__(self, history: pd.DataFrame) -> None:
+    def __init__(self, history: pd.DataFrame, weights: dict[str, float] | None = None) -> None:
         if history.empty:
             raise FeatureBuildError("history cannot be empty")
         required_cols = ["round"] + NUMBER_COLUMNS
@@ -69,6 +69,7 @@ class FeatureBuilder:
         if missing:
             raise FeatureBuildError(f"Missing columns: {missing}")
         self.history = history.sort_values("round").reset_index(drop=True)
+        self.weights = weights or {}
 
     def build(
         self,
@@ -109,7 +110,7 @@ class FeatureBuilder:
                 int(actual_row.iloc[0][col]) for col in NUMBER_COLUMNS
             )
 
-            features = self._extract_features(prior, target_round)
+            features = self._extract_features(prior, target_round, weights=self.weights)
             labels = np.array(
                 [1.0 if n in actual_numbers else 0.0 for n in range(1, 46)]
             )
@@ -126,20 +127,33 @@ class FeatureBuilder:
         self,
         prior: pd.DataFrame,
         target_round: int,
+        weights: dict[str, float] | None = None,
     ) -> np.ndarray:
         """Extract features for all 45 numbers using prior data.
+        
+        Args:
+            prior: Historical data before target_round
+            target_round: Round number to extract features for
+            weights: Optional custom weights for boost/HMM calculations
 
         Returns: shape (45, n_features)
         """
+        # Use provided weights or defaults
+        w = weights or {}
+        
         # Base scores
         base_calc = BaseScoreCalculator(prior_alpha=1.0, prior_beta=1.0)
         base_scores = base_calc.calculate_scores(prior, recent_n=50)
 
-        # Boost scores
+        # Boost scores with custom weights
         booster = BoostCalculator(
             hot_threshold=2, hot_window=5,
-            hot_weight=1.0, cold_window=10, cold_weight=1.0,
-            neighbor_weight=1.0, carryover_weight=1.0, reverse_weight=1.0,
+            hot_weight=w.get("hot_weight", 1.0),
+            cold_window=10,
+            cold_weight=w.get("cold_weight", 1.0),
+            neighbor_weight=w.get("neighbor_weight", 1.0),
+            carryover_weight=w.get("carryover_weight", 1.0),
+            reverse_weight=w.get("reverse_weight", 1.0),
         )
         boosts, boost_tags = booster.calculate_boosts(prior)
 
@@ -157,9 +171,13 @@ class FeatureBuilder:
             carryover_boost[n] = 1.0 if "carryover" in tags or "carryover2" in tags else 0.0
             reverse_boost[n] = 1.0 if "reverse" in tags else 0.0
 
-        # HMM scores
+        # HMM scores with custom weights
         try:
-            hmm_scorer = HMMScorer(hot_boost=1.0, cold_boost=1.0, window=100)
+            hmm_scorer = HMMScorer(
+                hot_boost=w.get("hmm_hot_boost", 1.0),
+                cold_boost=w.get("hmm_cold_boost", 1.0),
+                window=100
+            )
             hmm_boosts, hmm_tags = hmm_scorer.calculate_boosts(prior)
             hmm_hot = {n: 1.0 if "hmm_hot" in hmm_tags.get(n, []) else 0.0 for n in range(1, 46)}
             hmm_cold = {n: 1.0 if "hmm_cold" in hmm_tags.get(n, []) else 0.0 for n in range(1, 46)}

@@ -1,0 +1,6 @@
+{
+  "trained_until_round": 1211,
+  "trained_at": "2026-02-16 18:21:44",
+  "model_file": "data/xgb_model.pkl",
+  "weights_path": null
+}
