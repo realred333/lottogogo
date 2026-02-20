@@ -696,6 +696,48 @@
       font-size: 0.9rem;
     }
 
+    .signal-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.6rem;
+    }
+
+    .signal-chip {
+      border-radius: 999px;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .signal-chip.hot {
+      background: rgba(255, 107, 107, 0.15);
+      border: 1px solid rgba(255, 107, 107, 0.35);
+      color: #ffb0b0;
+    }
+
+    .signal-chip.cold {
+      background: rgba(100, 180, 255, 0.15);
+      border: 1px solid rgba(100, 180, 255, 0.35);
+      color: #b0d8ff;
+    }
+
+    .signal-chip.carry {
+      background: rgba(255, 200, 100, 0.15);
+      border: 1px solid rgba(255, 200, 100, 0.35);
+      color: #ffe0a0;
+    }
+
+    .card-summary {
+      font-size: 0.76rem;
+      color: var(--muted);
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
     .cta {
       margin-top: 1rem;
       padding: 1.1rem;
@@ -838,14 +880,19 @@
 
     <section class="panel hero">
       <div>
-        <p class="kicker">로또 통계 기반 확률 실험</p>
-        <h1><span class="gradient">확률 실험 기반</span><br />선택 보조 도구</h1>
-        <p class="sub">당첨을 보장하지 않습니다. 무근거 선택을 제거합니다.</p>
+        <p class="kicker">🔬 <span id="total-draws-kicker">1,211</span>회분 데이터 기반 분석</p>
+        <h1><span class="gradient">데이터가 말해주는</span><br />다음 번호의 근거</h1>
+        <p class="sub">감이 아닌 통계로, 당신의 선택에 근거를 더합니다.</p>
         <div class="hero-actions">
           <button id="start-btn" class="hero-btn" type="button">이번 주 번호 받기</button>
           <p class="hero-note">무료 · 로그인 불필요 · 10초 내 결과</p>
         </div>
         <div id="percentile-badge" class="quick-badge" hidden></div>
+        <div id="signal-summary" class="signal-summary" hidden>
+          <div class="signal-chip hot">🔥 최근 급상승 <span id="hot-count">0</span>개</div>
+          <div class="signal-chip cold">❄️ 장기 잠복 <span id="cold-count">0</span>개</div>
+          <div class="signal-chip carry">🔗 직전 연결 <span id="carry-count">0</span>개</div>
+        </div>
       </div>
 
       <div class="draw" aria-hidden="true" id="latest-draw-container">
@@ -1039,7 +1086,7 @@
     async function bootstrapEngine() {
       try {
         await ensureWorkerReady();
-        setStatus("준비 완료. 추천 버튼을 누르면 즉시 생성합니다.");
+        setStatus("✅ 준비 완료. 추천 버튼을 누르면 즉시 생성합니다.");
       } catch (error) {
         setStatus(
           error instanceof Error
@@ -1051,7 +1098,7 @@
 
     async function requestRecommend() {
       setLoading(true);
-      setStatus("조합 생성 중입니다...");
+      setStatus(`${cachedLatestRound || '전체'}회분 데이터에서 최적 조합 탐색 중...`);
 
       try {
         await ensureWorkerReady();
@@ -1065,8 +1112,8 @@
         const attempts = Number(result?.debug?.attempts || 0);
         setStatus(
           attempts > 0
-            ? `추천 결과를 갱신했습니다. (${attempts.toLocaleString("ko-KR")}회 탐색)`
-            : "추천 결과를 갱신했습니다."
+            ? `✅ ${attempts.toLocaleString("ko-KR")}개 조합을 분석하여 상위 ${state.games}개를 선별했습니다.`
+            : "✅ 추천 조합을 선별했습니다."
         );
       } catch (error) {
         setStatus(
@@ -1162,6 +1209,8 @@
 
         // Render latest draw results in hero section
         renderHeroLatestDraw(parsed);
+        // Render storytelling signal badges
+        renderSignalSummary(parsed);
 
         return parsed;
       });
@@ -1242,12 +1291,15 @@
           const tags = formatTags(item.tags);
           const reasons = formatReasons(item.reasons);
 
+          const cardSummary = buildCardSummary(numbers);
           return `
               <article class="result-card" style="animation-delay:${index * 60}ms">
                 <div class="card-top">
                   <span class="rank">추천 ${index + 1}</span>
                   <span class="score-pill">추천지수 ${scorePoint}</span>
                 </div>
+
+                <div class="card-summary">${escapeHtml(cardSummary)}</div>
 
                 <div class="number-line">
                   ${numbers.map((number) => renderBall(number)).join("")}
@@ -1360,6 +1412,60 @@
       } catch (e) {
         console.error("Failed to render hero latest draw:", e);
       }
+    }
+
+    // ── Storytelling: cached signal data ──
+    let cachedLatestRound = null;
+    let cachedHotNumbers = [];
+    let cachedColdNumbers = [];
+    let cachedCarryoverNumbers = [];
+
+    function renderSignalSummary(model) {
+      try {
+        const round = model.source?.latest_round;
+        const signals = model.signals || {};
+        const carryover = model.carryover_numbers || [];
+
+        cachedLatestRound = round;
+        cachedHotNumbers = signals.hot_numbers || [];
+        cachedColdNumbers = signals.cold_numbers || [];
+        cachedCarryoverNumbers = carryover;
+
+        // Update kicker with real round number
+        const kickerEl = document.getElementById('total-draws-kicker');
+        if (kickerEl && round) {
+          kickerEl.textContent = Number(round).toLocaleString('ko-KR');
+        }
+
+        // Show signal badges
+        const summaryEl = document.getElementById('signal-summary');
+        const hotEl = document.getElementById('hot-count');
+        const coldEl = document.getElementById('cold-count');
+        const carryEl = document.getElementById('carry-count');
+
+        if (summaryEl && hotEl && coldEl && carryEl) {
+          hotEl.textContent = cachedHotNumbers.length;
+          coldEl.textContent = cachedColdNumbers.length;
+          carryEl.textContent = cachedCarryoverNumbers.length;
+          summaryEl.hidden = false;
+        }
+      } catch (e) {
+        console.error('Failed to render signal summary:', e);
+      }
+    }
+
+    function buildCardSummary(numbers) {
+      const nums = numbers.map(Number);
+      const hotCount = nums.filter(n => cachedHotNumbers.includes(n)).length;
+      const coldCount = nums.filter(n => cachedColdNumbers.includes(n)).length;
+      const carryCount = nums.filter(n => cachedCarryoverNumbers.includes(n)).length;
+
+      const parts = [];
+      if (hotCount > 0) parts.push(`급상승 ${hotCount}개`);
+      if (coldCount > 0) parts.push(`잠복반등 ${coldCount}개`);
+      if (carryCount > 0) parts.push(`직전연결 ${carryCount}개`);
+      if (parts.length === 0) parts.push('균형 배분 조합');
+      return parts.join(' · ') + ' 포함';
     }
 
     function getBallPosClass(index) {
