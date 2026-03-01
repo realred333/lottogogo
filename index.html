@@ -784,6 +784,91 @@
       margin-top: 0.35rem;
     }
 
+    .editorial {
+      margin-top: 1rem;
+      padding: 1.2rem;
+    }
+
+    .editorial-intro {
+      margin: 0.7rem 0 0;
+      color: #cfdaf3;
+      font-size: 0.92rem;
+      line-height: 1.62;
+    }
+
+    .content-grid {
+      margin-top: 0.9rem;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.7rem;
+    }
+
+    .content-card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 0.9rem;
+    }
+
+    .content-card h3 {
+      margin: 0 0 0.45rem;
+      font-family: "Outfit", sans-serif;
+      font-size: 1.02rem;
+      color: #d9ffe9;
+    }
+
+    .content-card p {
+      margin: 0;
+      color: #c7d4ef;
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+
+    .bullet-list {
+      margin: 0;
+      padding-left: 1rem;
+      color: #c7d4ef;
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+
+    .bullet-list li+li {
+      margin-top: 0.3rem;
+    }
+
+    .trust-card {
+      margin-top: 0.8rem;
+      border: 1px solid rgba(13, 210, 160, 0.28);
+      border-radius: 16px;
+      background: rgba(13, 210, 160, 0.09);
+      padding: 0.85rem 0.9rem;
+    }
+
+    .trust-card h3 {
+      margin: 0 0 0.42rem;
+      font-family: "Outfit", sans-serif;
+      font-size: 0.98rem;
+      color: #cbffef;
+    }
+
+    .faq {
+      margin-top: 1rem;
+      padding: 1.1rem;
+    }
+
+    .faq details {
+      margin-top: 0.55rem;
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .faq p {
+      margin: 0.55rem 0 0;
+      color: #cfdaf3;
+      font-size: 0.88rem;
+      line-height: 1.62;
+    }
+
     .site-footer {
       margin-top: 1.5rem;
       padding: 1.2rem 0.5rem;
@@ -847,6 +932,10 @@
         grid-template-columns: 1fr;
       }
 
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+
       .hero {
         border-radius: 22px;
       }
@@ -874,7 +963,8 @@
       <nav class="header-nav">
         <a href="#generate">번호 생성</a>
         <a href="#results">추천 결과</a>
-        <a href="#notice">면책</a>
+        <a href="#guide">분석 가이드</a>
+        <a href="#faq">FAQ</a>
       </nav>
     </header>
 
@@ -964,6 +1054,96 @@
       <div id="result-cards" class="cards" aria-live="polite"></div>
     </section>
 
+    <section class="panel editorial" id="guide">
+      <div class="results-head">
+        <h2>분석 가이드</h2>
+        <p>추천 로직, 데이터 출처, 한계를 공개합니다</p>
+      </div>
+      <p class="editorial-intro">
+        LottoGoGo는 숫자를 “예측”한다고 단정하지 않고, 과거 공개 데이터를 기반으로 선택 근거를 정리하는 도구입니다.
+        번호를 무작위로 찍는 대신, 필터와 점수 기준을 통과한 조합을 제시해 판단 과정을 투명하게 제공합니다.
+      </p>
+
+      <div class="content-grid">
+        <article class="content-card">
+          <h3>1) 데이터 출처와 갱신</h3>
+          <p>
+            동행복권 회차 데이터를 기준으로 주기적으로 갱신합니다. 최신 회차 데이터가 반영되면 모델 파일을 다시 생성하고,
+            브라우저에서 즉시 사용할 수 있도록 경량화된 형태로 배포합니다.
+          </p>
+        </article>
+        <article class="content-card">
+          <h3>2) 조합 생성 방식</h3>
+          <p>
+            기본 점수(Base)와 흐름 보정(Hot/Cold/Carryover), 그리고 다단계 필터(합계·홀짝·고저·구간·AC)를 조합합니다.
+            이후 다수 후보 중 점수와 다양성을 함께 고려해 최종 추천군을 정렬합니다.
+          </p>
+        </article>
+        <article class="content-card">
+          <h3>3) 결과 해석 방법</h3>
+          <p>
+            추천지수는 “당첨 확률”이 아니라 현재 설정에서의 상대적 우선순위입니다. 같은 회차에서도 설정(A/B, 5/10게임,
+            GA/XGBoost)에 따라 결과가 달라질 수 있으며, 이는 서로 다른 가정으로 탐색하기 때문입니다.
+          </p>
+        </article>
+        <article class="content-card">
+          <h3>4) 반드시 알아야 할 한계</h3>
+          <p>
+            복권 추첨은 본질적으로 확률 사건이며, 어떤 도구도 당첨을 보장할 수 없습니다. 이 페이지의 콘텐츠는 교육/실험 목적이며,
+            실제 구매 금액과 빈도는 개인의 책임 범위에서 신중히 결정해야 합니다.
+          </p>
+        </article>
+      </div>
+
+      <div class="trust-card">
+        <h3>신뢰 정보</h3>
+        <ul class="bullet-list">
+          <li>운영 원칙/콘텐츠 기준: <a href="/about.html">운영 정보</a></li>
+          <li>세부 모델 구조/필터 설명: <a href="/methodology.html">분석 방법론</a></li>
+          <li>개인정보 및 쿠키 안내: <a href="/privacy.html">개인정보처리방침</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="panel faq" id="faq">
+      <div class="results-head">
+        <h2>자주 묻는 질문</h2>
+        <p>서비스 사용 전 확인하면 좋은 핵심 질문</p>
+      </div>
+
+      <details>
+        <summary>추천 번호가 당첨 가능성을 높여주나요?</summary>
+        <p>
+          당첨을 보장하지 않습니다. 이 도구는 과거 데이터로 선택 근거를 정리하는 보조 수단이며, 무작위성을 제거할 수는 없습니다.
+          결과를 절대적 예측으로 사용하기보다, 선택 기준을 일관되게 관리하는 참고 정보로 활용하는 것이 적절합니다.
+        </p>
+      </details>
+
+      <details>
+        <summary>GA/엔진과 XGBoost 모델은 무엇이 다른가요?</summary>
+        <p>
+          GA/엔진은 규칙 기반 점수와 최적화된 가중치 중심이고, XGBoost는 특징 데이터를 학습한 트리 앙상블 모델입니다.
+          같은 데이터라도 접근 방식이 달라 결과 조합이 달라질 수 있으며, 두 모델을 비교해 보는 것이 유용합니다.
+        </p>
+      </details>
+
+      <details>
+        <summary>왜 최근 회차 번호가 일부 포함되기도 하나요?</summary>
+        <p>
+          무조건 배제하면 오히려 편향이 생길 수 있어, 최근 연결(Carryover)을 제한적으로 반영합니다.
+          과다 반영을 막기 위한 상한 조건을 두고 있어 특정 패턴에 과도하게 쏠리지 않도록 설계했습니다.
+        </p>
+      </details>
+
+      <details>
+        <summary>이 사이트는 어떤 사람에게 적합한가요?</summary>
+        <p>
+          복권 구매를 권장하기 위한 서비스가 아니라, 번호 선택 과정을 데이터 관점에서 기록·비교하고 싶은 사용자에게 적합합니다.
+          과도한 지출을 유도하지 않으며, 구매 판단은 언제나 사용자 본인의 책임입니다.
+        </p>
+      </details>
+    </section>
+
     <section class="panel cta">
       <p>이 실험이 괜찮았다면 커피 한 잔으로 계속 실험할 수 있게 도와주세요 ☕</p>
       <a class="pay" href="https://buymeacoffee.com/lottogogo" target="_blank" rel="noopener noreferrer">커피 한 잔 후원하기</a>
@@ -980,7 +1160,10 @@
 
     <footer class="site-footer">
       <div class="footer-links">
+        <a href="/about.html">운영 정보</a>
+        <a href="/methodology.html">분석 방법론</a>
         <a href="/privacy.html">개인정보처리방침</a>
+        <a href="/terms.html">이용약관</a>
         <a href="#notice">면책 조항</a>
       </div>
       <p style="margin:0;">© 2026 LottoGoGo. 본 서비스는 당첨을 보장하지 않습니다.</p>
