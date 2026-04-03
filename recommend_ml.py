@@ -15,6 +15,7 @@ from lottogogo.tuning.feature_builder import FeatureBuilder
 from lottogogo.engine.score.normalizer import ProbabilityNormalizer
 from lottogogo.engine.sampler.monte_carlo import MonteCarloSampler
 from lottogogo.engine.filters import (
+    ArithmeticProgressionFilter,
     FilterPipeline,
     SumFilter,
     ACFilter,
@@ -233,10 +234,16 @@ def main(csv_path: str = "history.csv", num_games: int = 5, seed: int | None = N
     
     # 확률 정규화 (샘플링용)
     probs_normalized = ProbabilityNormalizer.to_sampling_probabilities(
-        probs, 
-        temperature=0.5, 
+        probs,
+        temperature=0.5,
         min_prob_floor=0.005
     )
+
+    # 40~45 번호 확률 하향 (정규화 후 적용 → 진짜 절반)
+    for num in range(40, 46):
+        probs_normalized[num] *= 0.5
+    total_prob = sum(probs_normalized.values())
+    probs_normalized = {n: p / total_prob for n, p in probs_normalized.items()}
     
     # 상위 번호 출력
     sorted_numbers = sorted(range(1, 46), key=lambda n: probs[n], reverse=True)
@@ -250,8 +257,9 @@ def main(csv_path: str = "history.csv", num_games: int = 5, seed: int | None = N
     last_round = history[history["round"] == latest_round].iloc[0]
     carryover_numbers = set(int(last_round[col]) for col in NUMBER_COLS)
     
-    if len(history) >= 2:
-        second_last_round = history[history["round"] == latest_round - 1].iloc[0]
+    sorted_history = history.sort_values("round", ascending=False)
+    if len(sorted_history) >= 2:
+        second_last_round = sorted_history.iloc[1]
         carryover2_numbers = set(int(second_last_round[col]) for col in NUMBER_COLS)
     else:
         carryover2_numbers = set()
@@ -276,6 +284,7 @@ def main(csv_path: str = "history.csv", num_games: int = 5, seed: int | None = N
         OddEvenFilter(min_odd=2, max_odd=4),
         HighLowFilter(min_high=2, max_high=4),
         HistoryFilter(historical_draws=historical_draws, match_threshold=5),
+        ArithmeticProgressionFilter(min_ap_length=5),
     ])
     filtered = pipeline.filter_combinations(combinations)
     pass_rate = len(filtered) / len(combinations) * 100

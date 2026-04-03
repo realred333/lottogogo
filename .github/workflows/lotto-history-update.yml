@@ -37,16 +37,34 @@ jobs:
         run: python scripts/build_frontend_model.py --history-csv history.csv --output-ga data/model_ga.json --output-xgb data/model_xgb.json --output data/model.json
 
       - name: Commit and push if changed
+        id: commit
         run: |
           if git diff --quiet -- history.csv data/model_ga.json data/model_xgb.json data/model.json; then
             echo "No new round/model change. Nothing to commit."
+            echo "updated=false" >> $GITHUB_OUTPUT
             exit 0
           fi
 
           latest_round=$(python -c "import pandas as pd; print(int(pd.read_csv('history.csv')['round'].max()))")
+          echo "latest_round=${latest_round}" >> $GITHUB_OUTPUT
+          echo "updated=true" >> $GITHUB_OUTPUT
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add history.csv data/model_ga.json data/model_xgb.json data/model.json
           git commit -m "chore(data): update history/models (round ${latest_round})"
           git push
+
+      - name: Discord 알림 (업데이트 완료)
+        if: steps.commit.outputs.updated == 'true'
+        run: |
+          curl -s -X POST "https://discord.com/api/webhooks/1489697563367051436/FcCKJ394R1VqN7sPxqwJydvJ2Ll4YLGSGERoY6inGzgwOZBmQu5_nppUjOlYxJE8S7Hv" \
+            -H "Content-Type: application/json" \
+            -d "{\"content\": \"🎱 **로또 데이터 업데이트 완료**\n📊 ${{ steps.commit.outputs.latest_round }}회차 데이터 및 GA/XGBoost 모델 재빌드 완료\"}"
+
+      - name: Discord 알림 (새 데이터 없음)
+        if: steps.commit.outputs.updated != 'true'
+        run: |
+          curl -s -X POST "https://discord.com/api/webhooks/1489697563367051436/FcCKJ394R1VqN7sPxqwJydvJ2Ll4YLGSGERoY6inGzgwOZBmQu5_nppUjOlYxJE8S7Hv" \
+            -H "Content-Type: application/json" \
+            -d "{\"content\": \"⏳ **로또 데이터 확인** - 새 회차 없음 (아직 발표 전)\"}"

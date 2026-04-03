@@ -16,6 +16,7 @@ from lottogogo.engine.score.hmm_scorer import HMMScorer
 from lottogogo.engine.score.normalizer import ProbabilityNormalizer
 from lottogogo.engine.sampler.monte_carlo import MonteCarloSampler
 from lottogogo.engine.filters import (
+    ArithmeticProgressionFilter,
     FilterPipeline,
     SumFilter,
     ACFilter,
@@ -196,10 +197,17 @@ def main(csv_path: str = "history.csv", num_games: int = 5, seed: int | None = N
 
     # 상위 확률 번호
     probs = ProbabilityNormalizer.to_sampling_probabilities(
-        raw_scores, 
-        temperature=weights.get("temperature", 0.5), 
+        raw_scores,
+        temperature=weights.get("temperature", 0.5),
         min_prob_floor=0.005
     )
+
+    # 40~45 번호 확률 하향 (정규화 후 적용 → 진짜 절반)
+    HIGH_ZONE_PENALTY = 0.5
+    for num in range(40, 46):
+        probs[num] *= HIGH_ZONE_PENALTY
+    total_prob = sum(probs.values())
+    probs = {n: p / total_prob for n, p in probs.items()}
     
     # Poisson/Markov 개별 페널티 계산
     poisson_penalties = penalizer.calculate_poisson_penalty(history)
@@ -240,6 +248,7 @@ def main(csv_path: str = "history.csv", num_games: int = 5, seed: int | None = N
         OddEvenFilter(min_odd=2, max_odd=4),
         HighLowFilter(min_high=2, max_high=4),
         HistoryFilter(historical_draws=historical_draws, match_threshold=5),
+        ArithmeticProgressionFilter(min_ap_length=5),
     ])
     filtered = pipeline.filter_combinations(combinations)
     pass_rate = len(filtered) / len(combinations) * 100

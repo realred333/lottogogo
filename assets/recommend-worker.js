@@ -102,6 +102,17 @@ function generateRecommendations({ preset, games, recentKeys }) {
     throw new Error(`model preset weights must include 45 numbers: ${presetName}`);
   }
 
+  // 40~45 번호(index 39~44) 확률 절반으로 하향 후 재정규화
+  for (let i = 39; i < 45; i += 1) {
+    weights[i] *= 0.5;
+  }
+  const weightTotal = weights.reduce((acc, w) => acc + w, 0);
+  if (weightTotal > 0) {
+    for (let i = 0; i < weights.length; i += 1) {
+      weights[i] /= weightTotal;
+    }
+  }
+
   const maxAttempts = Number(sampling.max_attempts) > 0 ? Number(sampling.max_attempts) : 20000;
   const targetCandidates = Math.max(350, gameCount * 70);
   const recentSet = new Set(Array.isArray(recentKeys) ? recentKeys.map((key) => String(key)) : []);
@@ -225,9 +236,33 @@ function passesAllFilters(numbers, key, filters, special) {
   if (violatesAC(numbers, filters)) return false;
   if (violatesZone(numbers, filters)) return false;
   if (violatesTail(numbers, filters)) return false;
+  if (violatesArithmeticProgression(numbers)) return false;
   if (violatesSpecialRules(numbers, special)) return false;
   if (!passesHistoryFilter(numbers, key)) return false;
   return true;
+}
+
+function violatesArithmeticProgression(numbers) {
+  // 6개 중 5개 이상이 등차수열을 이루면 제거 (역대 0~1회 출현)
+  const n = numbers.length;
+  for (let skip = 0; skip < n; skip += 1) {
+    const subset = [];
+    for (let i = 0; i < n; i += 1) {
+      if (i !== skip) subset.push(numbers[i]);
+    }
+    const diffs = [];
+    for (let i = 0; i < subset.length - 1; i += 1) {
+      diffs.push(subset[i + 1] - subset[i]);
+    }
+    if (new Set(diffs).size === 1) return true;
+  }
+  // 6개 전체 등차수열 체크
+  const allDiffs = [];
+  for (let i = 0; i < n - 1; i += 1) {
+    allDiffs.push(numbers[i + 1] - numbers[i]);
+  }
+  if (new Set(allDiffs).size === 1) return true;
+  return false;
 }
 
 function violatesBasicRanges(numbers, filters) {
