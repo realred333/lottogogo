@@ -60,6 +60,6 @@ jobs:
       - name: Discord 알림 (GA 최적화 완료)
         run: |
           FITNESS=$(python -c "import json; d=json.load(open('data/optimized_weights.json')); f=d['fitness']; print(f'val={f[\"val_fitness\"]:.3f} / train={f[\"train_fitness\"]:.3f}')")
-          curl -s -X POST "https://discord.com/api/webhooks/1489697563367051436/FcCKJ394R1VqN7sPxqwJydvJ2Ll4YLGSGERoY6inGzgwOZBmQu5_nppUjOlYxJE8S7Hv" \
+          curl -s -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
             -d "{\"content\": \"🧬 **GA 가중치 최적화 완료**\n📈 fitness: ${FITNESS}\"}"

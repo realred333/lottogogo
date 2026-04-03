@@ -58,13 +58,13 @@ jobs:
       - name: Discord 알림 (업데이트 완료)
         if: steps.commit.outputs.updated == 'true'
         run: |
-          curl -s -X POST "https://discord.com/api/webhooks/1489697563367051436/FcCKJ394R1VqN7sPxqwJydvJ2Ll4YLGSGERoY6inGzgwOZBmQu5_nppUjOlYxJE8S7Hv" \
+          curl -s -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
             -d "{\"content\": \"🎱 **로또 데이터 업데이트 완료**\n📊 ${{ steps.commit.outputs.latest_round }}회차 데이터 및 GA/XGBoost 모델 재빌드 완료\"}"
 
       - name: Discord 알림 (새 데이터 없음)
         if: steps.commit.outputs.updated != 'true'
         run: |
-          curl -s -X POST "https://discord.com/api/webhooks/1489697563367051436/FcCKJ394R1VqN7sPxqwJydvJ2Ll4YLGSGERoY6inGzgwOZBmQu5_nppUjOlYxJE8S7Hv" \
+          curl -s -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
             -d "{\"content\": \"⏳ **로또 데이터 확인** - 새 회차 없음 (아직 발표 전)\"}"
