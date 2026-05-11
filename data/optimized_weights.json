@@ -1,6 +1,6 @@
 {
-  "cycle_label": "auto-optimization-a7156190ff803954b8c9459675f695c32a2261c7",
-  "optimized_at": "2026-05-04T02:56:32+0000",
+  "cycle_label": "auto-optimization-4cb413b279812240eaec3318ca85ad436d71916a",
+  "optimized_at": "2026-05-11T03:07:29+0000",
   "weights": {
     "hot_weight": 0.7297980817739331,
     "cold_weight": 0.36684686862886917,
