@@ -167,7 +167,12 @@ function generateRecommendations({ preset, games, recentKeys }) {
   }
 
   const ranked = [...candidatesByKey.values()].sort((left, right) => right.score - left.score);
-  const selected = selectWithDiversity(ranked, gameCount, Number(ranking.max_overlap) || 3);
+  const selected = selectWithDiversity(
+    ranked,
+    gameCount,
+    Number(ranking.max_overlap) || 3,
+    Number(ranking.number_frequency_ratio) || 0.4,
+  );
 
   if (!selected.length) {
     throw new Error("추천 가능한 조합을 생성하지 못했습니다. 잠시 후 다시 시도해주세요.");
@@ -422,28 +427,70 @@ function buildTags(numbers) {
     .map((entry) => String(entry[0]));
 }
 
-function selectWithDiversity(ranked, games, maxOverlap) {
-  const selected = [];
-  const selectedKeySet = new Set();
+// 조합 점수는 번호 점수의 단순 합이라, 제약이 없으면 최고점 번호가 모든 게임에
+// 들어간다. maxOverlap은 조합끼리의 겹침만 막을 뿐 번호 단위 쏠림은 막지 못한다.
+// 번호별 등장 횟수 상한을 두고, 부족하면 빈도 → 겹침 순으로 완화한다.
+function selectWithDiversity(ranked, games, maxOverlap, numberFrequencyRatio) {
+  const cap = defaultNumberFrequency(games, numberFrequencyRatio);
 
-  for (const item of ranked) {
-    if (violatesOverlap(item.numbers, selected, maxOverlap)) continue;
-
-    selected.push(item);
-    selectedKeySet.add(item.key);
-    if (selected.length >= games) break;
+  const plans = [];
+  for (let frequency = cap; frequency < games; frequency += 1) {
+    plans.push({ maxOverlap, maxFrequency: frequency });
+  }
+  plans.push({ maxOverlap, maxFrequency: null });
+  for (let overlap = maxOverlap + 1; overlap <= 6; overlap += 1) {
+    plans.push({ maxOverlap: overlap, maxFrequency: null });
   }
 
-  if (selected.length < games) {
+  let best = [];
+  for (const plan of plans) {
+    const selected = selectOnce(ranked, games, plan.maxOverlap, plan.maxFrequency);
+    if (selected.length > best.length) best = selected;
+    if (best.length >= games) break;
+  }
+
+  if (best.length < games) {
+    const selectedKeySet = new Set(best.map((item) => item.key));
     for (const item of ranked) {
       if (selectedKeySet.has(item.key)) continue;
-      selected.push(item);
+      best.push(item);
       selectedKeySet.add(item.key);
-      if (selected.length >= games) break;
+      if (best.length >= games) break;
     }
   }
 
+  return best.slice(0, games);
+}
+
+function defaultNumberFrequency(games, ratio) {
+  const safeRatio = Number(ratio) > 0 && Number(ratio) <= 1 ? Number(ratio) : 0.4;
+  return Math.max(2, Math.ceil(games * safeRatio));
+}
+
+function selectOnce(ranked, games, maxOverlap, maxFrequency) {
+  const selected = [];
+  const numberCounts = new Map();
+
+  for (const item of ranked) {
+    if (violatesOverlap(item.numbers, selected, maxOverlap)) continue;
+    if (violatesFrequency(item.numbers, numberCounts, maxFrequency)) continue;
+
+    selected.push(item);
+    for (const number of item.numbers) {
+      numberCounts.set(number, (numberCounts.get(number) || 0) + 1);
+    }
+    if (selected.length >= games) break;
+  }
+
   return selected;
+}
+
+function violatesFrequency(candidate, numberCounts, maxFrequency) {
+  if (maxFrequency === null || !Number.isFinite(maxFrequency)) return false;
+  for (const number of candidate) {
+    if ((numberCounts.get(number) || 0) >= maxFrequency) return true;
+  }
+  return false;
 }
 
 function violatesOverlap(candidate, selected, maxOverlap) {

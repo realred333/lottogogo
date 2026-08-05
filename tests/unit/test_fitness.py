@@ -7,6 +7,7 @@ import pytest
 
 from lottogogo.tuning.fitness import (
     WEIGHT_BOUNDS,
+    WEIGHT_BOUNDS_NO_HMM,
     WEIGHT_KEYS,
     FitnessEvaluationError,
     FitnessEvaluator,
@@ -52,7 +53,6 @@ def _default_weights() -> dict[str, float]:
         "hmm_cold_boost": 0.15,
         "poisson_lambda": 0.0,
         "markov_lambda": 0.0,
-        "temperature": 0.5,
     }
 
 
@@ -109,7 +109,7 @@ def test_evaluator_rejects_out_of_bounds_weight():
     history = _make_history(120)
     evaluator = FitnessEvaluator(history, train_end=80, val_end=120)
     bad_weights = _default_weights()
-    bad_weights["temperature"] = 10.0  # above max 2.0
+    bad_weights["hot_weight"] = 10.0  # above max 1.0
     with pytest.raises(FitnessEvaluationError, match="out of bounds"):
         evaluator.evaluate(bad_weights)
 
@@ -153,7 +153,17 @@ def test_evaluator_time_sequential_no_leakage():
 
 def test_weight_bounds_have_correct_keys():
     assert set(WEIGHT_KEYS) == set(WEIGHT_BOUNDS.keys())
-    assert len(WEIGHT_KEYS) == 10
+    assert len(WEIGHT_KEYS) == 9
+
+
+def test_temperature_is_not_a_tunable_weight():
+    """Temperature has no gradient in this fitness function, so it must not be a gene.
+
+    Fitness ranks raw scores; the softmax is never applied during evaluation.
+    A temperature gene would drift freely and then corrupt the sampling stage.
+    """
+    assert "temperature" not in WEIGHT_BOUNDS
+    assert "temperature" not in WEIGHT_BOUNDS_NO_HMM
 
 
 def test_weight_bounds_are_valid():

@@ -38,7 +38,22 @@ class FitnessResult:
     combined_fitness: float  # 0.6 * train + 0.4 * val
 
 
-# Chromosome key names and their valid ranges
+# Chromosome key names and their valid ranges.
+#
+# NOTE: `temperature` used to live here and was removed deliberately.
+# Fitness is computed from the *ranking* of raw scores (see `_hit_at_k` /
+# `_mean_rank`), and `CachedScoreComputer.compute` returns raw scores without
+# ever applying the softmax. Temperature therefore had zero gradient in this
+# objective: GA could not optimize it, so it drifted to whatever value random
+# initialization plus mutation happened to leave it at — in the last run, the
+# lower bound 0.1. That value was then consumed by recommend.py and
+# build_frontend_model.py, where it *does* matter, collapsing ~31% of the
+# sampling mass onto a single number.
+#
+# Sampling temperature is now a fixed constant
+# (`lottogogo.engine.score.normalizer.DEFAULT_TEMPERATURE`) or a per-preset
+# value (`mvp.service.PresetConfig.temperature`). If it should ever be tuned
+# again, the fitness function must first be changed to actually sample.
 WEIGHT_BOUNDS: dict[str, tuple[float, float]] = {
     "hot_weight": (0.0, 1.0),
     "cold_weight": (0.0, 0.5),
@@ -49,10 +64,9 @@ WEIGHT_BOUNDS: dict[str, tuple[float, float]] = {
     "hmm_cold_boost": (0.0, 0.5),
     "poisson_lambda": (0.0, 0.5),
     "markov_lambda": (0.0, 0.5),
-    "temperature": (0.1, 2.0),
 }
 
-# HMM-disabled configuration (8D instead of 10D)
+# HMM-disabled configuration (7D instead of 9D)
 WEIGHT_BOUNDS_NO_HMM: dict[str, tuple[float, float]] = {
     "hot_weight": (0.0, 1.0),
     "cold_weight": (0.0, 0.5),
@@ -61,7 +75,6 @@ WEIGHT_BOUNDS_NO_HMM: dict[str, tuple[float, float]] = {
     "reverse_weight": (0.0, 0.5),
     "poisson_lambda": (0.0, 0.5),
     "markov_lambda": (0.0, 0.5),
-    "temperature": (0.1, 2.0),
 }
 
 WEIGHT_KEYS = list(WEIGHT_BOUNDS.keys())

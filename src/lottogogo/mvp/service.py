@@ -24,7 +24,12 @@ from lottogogo.engine.filters import (
     TailFilter,
     ZoneFilter,
 )
-from lottogogo.engine.ranker import CombinationRank, CombinationRanker, DiversitySelector
+from lottogogo.engine.ranker import (
+    CombinationRank,
+    CombinationRanker,
+    default_number_frequency,
+    select_with_relaxation,
+)
 from lottogogo.engine.sampler import MonteCarloSampler
 from lottogogo.engine.score import (
     BaseScoreCalculator,
@@ -92,6 +97,9 @@ class PresetConfig:
     excluded_numbers: frozenset[int]
     max_carryover_in_combo: int | None
     percentile_bias: int
+    # Fraction of the requested games a single number may appear in. Without this,
+    # the top-scoring number lands in every game (combo score is a plain sum).
+    number_frequency_ratio: float
 
 
 PRESET_CONFIGS: dict[PresetName, PresetConfig] = {
@@ -115,6 +123,7 @@ PRESET_CONFIGS: dict[PresetName, PresetConfig] = {
         excluded_numbers=frozenset({8}),
         max_carryover_in_combo=2,
         percentile_bias=-5,
+        number_frequency_ratio=0.4,
     ),
     "B": PresetConfig(
         name="B",
@@ -136,6 +145,7 @@ PRESET_CONFIGS: dict[PresetName, PresetConfig] = {
         excluded_numbers=frozenset(),
         max_carryover_in_combo=3,
         percentile_bias=8,
+        number_frequency_ratio=0.6,
     ),
 }
 
@@ -349,7 +359,7 @@ class RecommendationService:
         if not ranked:
             raise RuntimeError("추천 가능한 조합을 생성하지 못했습니다.")
 
-        selected = self._select_with_diversity(ranked=ranked, games=games, max_overlap=config.max_overlap)
+        selected = self._select_with_diversity(ranked=ranked, games=games, config=config)
         percentile = self._calculate_percentile(selected, ranked, config.percentile_bias)
 
         rank_map = {entry.numbers: entry for entry in ranked}
@@ -461,14 +471,21 @@ class RecommendationService:
         return result
 
     @staticmethod
-    def _select_with_diversity(ranked: list[CombinationRank], games: int, max_overlap: int) -> list[tuple[int, ...]]:
+    def _select_with_diversity(
+        ranked: list[CombinationRank], games: int, config: PresetConfig
+    ) -> list[tuple[int, ...]]:
         candidates = [entry.numbers for entry in ranked]
-        selected = DiversitySelector(max_overlap=max_overlap).select(candidates, output_count=games)
+        selected = select_with_relaxation(
+            candidates,
+            output_count=games,
+            max_overlap=config.max_overlap,
+            max_number_frequency=default_number_frequency(games, config.number_frequency_ratio),
+        )
 
         if len(selected) >= games:
             return selected
 
-        # If strict overlap constraints produce fewer items, fill from ranked list.
+        # If even the fully relaxed plan produces fewer items, fill from ranked list.
         seen = set(selected)
         for numbers in candidates:
             if numbers in seen:

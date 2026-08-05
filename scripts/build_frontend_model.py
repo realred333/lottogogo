@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from copy import deepcopy
 from datetime import datetime, timezone
 from itertools import combinations
 import json
@@ -332,9 +333,11 @@ def main() -> int:
     for preset_name, config in PRESET_CONFIGS.items():
         sample_size = args.sample_size_override or config.sample_size
 
+        # temperature is owned by the preset, never by the GA weights file.
+        # See lottogogo.tuning.fitness for why it is not a tunable weight.
         base_prob_map = ProbabilityNormalizer.to_sampling_probabilities(
             raw_scores,
-            temperature=weights.get("temperature", config.temperature),
+            temperature=config.temperature,
             min_prob_floor=config.min_prob_floor,
         )
         base_prob_map = normalize_distribution(base_prob_map)
@@ -401,6 +404,7 @@ def main() -> int:
                 "top_k": config.top_k,
                 "max_overlap": config.max_overlap,
                 "percentile_bias": config.percentile_bias,
+                "number_frequency_ratio": config.number_frequency_ratio,
             },
             "sampling": {
                 "sample_size": int(sample_size),
@@ -467,8 +471,10 @@ def main() -> int:
         xgb_probs = calculate_probabilities_xgb(history, weights=weights)
         xgb_probs_normalized = normalize_distribution(xgb_probs)
         
-        # Create XGBoost model with same structure but different probabilities
-        xgb_model = model.copy()
+        # Deep copy is required: a shallow copy shares the nested "presets" dict,
+        # so writing XGBoost weights below would also overwrite the GA model and
+        # corrupt the legacy data/model.json written from `model` afterwards.
+        xgb_model = deepcopy(model)
         xgb_model["model_type"] = "xgboost"
         
         # Update sampling weights in all presets
