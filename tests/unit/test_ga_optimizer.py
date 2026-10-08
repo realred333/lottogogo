@@ -160,6 +160,23 @@ def test_checkpoint_save_load(tmp_path: Path):
     assert len(data["population"]) == 10
 
 
+def test_checkpoint_from_other_run_is_ignored(tmp_path: Path):
+    """A checkpoint left by a different window must not hijack a fresh run."""
+    history = _make_history(120)
+    config = GAConfig(population_size=10, generations=3, seed=42, elitism_count=2)
+    cp_path = tmp_path / "cp.json"
+
+    stale = GAOptimizer(FitnessEvaluator(history, train_end=70, val_end=110), config)
+    stale.run(checkpoint_path=cp_path, verbose=False)
+
+    fresh_eval = FitnessEvaluator(history, train_end=80, val_end=120)
+    resumed = GAOptimizer(fresh_eval, config).run(checkpoint_path=cp_path, verbose=False)
+    clean = GAOptimizer(fresh_eval, config).run(checkpoint_path=None, verbose=False)
+
+    assert len(resumed.generation_log) == 3
+    assert resumed.best_weights == clean.best_weights
+
+
 # ── Tests: save_result ───────────────────────────────────────────────────────
 
 def test_save_result_creates_json(tmp_path: Path):

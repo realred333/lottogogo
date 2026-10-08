@@ -7,6 +7,7 @@ against the existing engine pipeline and computing hit@K metrics.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import threading
 from typing import Any
 
 import numpy as np
@@ -38,7 +39,22 @@ class FitnessResult:
     combined_fitness: float  # 0.6 * train + 0.4 * val
 
 
-# Chromosome key names and their valid ranges
+# Chromosome key names and their valid ranges.
+#
+# NOTE: `temperature` used to live here and was removed deliberately.
+# Fitness is computed from the *ranking* of raw scores (see `_hit_at_k` /
+# `_mean_rank`), and `CachedScoreComputer.compute` returns raw scores without
+# ever applying the softmax. Temperature therefore had zero gradient in this
+# objective: GA could not optimize it, so it drifted to whatever value random
+# initialization plus mutation happened to leave it at — in the last run, the
+# lower bound 0.1. That value was then consumed by recommend.py and
+# build_frontend_model.py, where it *does* matter, collapsing ~31% of the
+# sampling mass onto a single number.
+#
+# Sampling temperature is now a fixed constant
+# (`lottogogo.engine.score.normalizer.DEFAULT_TEMPERATURE`) or a per-preset
+# value (`mvp.service.PresetConfig.temperature`). If it should ever be tuned
+# again, the fitness function must first be changed to actually sample.
 WEIGHT_BOUNDS: dict[str, tuple[float, float]] = {
     "hot_weight": (0.0, 1.0),
     "cold_weight": (0.0, 0.5),
@@ -49,10 +65,9 @@ WEIGHT_BOUNDS: dict[str, tuple[float, float]] = {
     "hmm_cold_boost": (0.0, 0.5),
     "poisson_lambda": (0.0, 0.5),
     "markov_lambda": (0.0, 0.5),
-    "temperature": (0.1, 2.0),
 }
 
-# HMM-disabled configuration (8D instead of 10D)
+# HMM-disabled configuration (7D instead of 9D)
 WEIGHT_BOUNDS_NO_HMM: dict[str, tuple[float, float]] = {
     "hot_weight": (0.0, 1.0),
     "cold_weight": (0.0, 0.5),
@@ -61,7 +76,6 @@ WEIGHT_BOUNDS_NO_HMM: dict[str, tuple[float, float]] = {
     "reverse_weight": (0.0, 0.5),
     "poisson_lambda": (0.0, 0.5),
     "markov_lambda": (0.0, 0.5),
-    "temperature": (0.1, 2.0),
 }
 
 WEIGHT_KEYS = list(WEIGHT_BOUNDS.keys())
@@ -76,44 +90,15 @@ def random_baseline(k: int = 15) -> float:
     return k * 6 / TOTAL_NUMBERS
 
 
-class CachedScoreComputer:
-    """Reusable score computer with cached calculator instances."""
-    
-    def __init__(self, history: pd.DataFrame) -> None:
-        """Initialize with history and create reusable calculator instances."""
-        self.history = history
-        # Pre-create calculator instances (reused across evaluations)
-        self.base_calc = BaseScoreCalculator(prior_alpha=1.0, prior_beta=1.0)
-        self.ensembler = ScoreEnsembler(minimum_score=0.0)
-    
-    def compute(self, weights: dict[str, float]) -> dict[int, float]:
-        """Compute scores with given weights using cached instances."""
-        # Create weight-dependent calculators (lightweight)
-        booster = BoostCalculator(
-            hot_threshold=2,
-            hot_window=5,
-            hot_weight=weights["hot_weight"],
-            cold_window=10,
-            cold_weight=weights["cold_weight"],
-            neighbor_weight=weights["neighbor_weight"],
-            carryover_weight=weights["carryover_weight"],
-            reverse_weight=weights["reverse_weight"],
-        )
-        penalizer = PenaltyCalculator(
-            poisson_window=20,
-            poisson_lambda=weights["poisson_lambda"],
-            markov_lambda=weights["markov_lambda"],
-        )
-        
-        base_scores = self.base_calc.calculate_scores(self.history, recent_n=50)
-        boosts, _ = booster.calculate_boosts(self.history)
-        
-        # HMM scorer (DISABLED for performance)
-        combined_boosts = boosts  # Skip HMM boosts
-        
-        penalties = penalizer.calculate_penalties(self.history)
-        raw_scores = self.ensembler.combine(base_scores, combined_boosts, penalties)
-        return raw_scores
+BOOST_WEIGHT_KEYS = (
+    "hot_weight",
+    "cold_weight",
+    "neighbor_weight",
+    "carryover_weight",
+    "reverse_weight",
+)
+_NUMBERS = tuple(range(1, TOTAL_NUMBERS + 1))
+_UNIT_LAMBDA = 0.5  # largest value PenaltyCalculator accepts
 
 
 def _compute_scores(
@@ -121,12 +106,82 @@ def _compute_scores(
     weights: dict[str, float],
 ) -> dict[int, float]:
     """Run the engine pipeline with given weights and return raw scores.
-    
-    NOTE: This function is kept for backward compatibility.
-    For performance, use CachedScoreComputer instead.
+
+    This is the reference implementation. `CachedScoreComputer` must return
+    the same scores; it only avoids redoing the weight-independent work.
     """
-    computer = CachedScoreComputer(history)
-    return computer.compute(weights)
+    booster = BoostCalculator(
+        hot_threshold=2,
+        hot_window=5,
+        cold_window=10,
+        **{key: weights[key] for key in BOOST_WEIGHT_KEYS},
+    )
+    penalizer = PenaltyCalculator(
+        poisson_window=20,
+        poisson_lambda=weights["poisson_lambda"],
+        markov_lambda=weights["markov_lambda"],
+    )
+    base_scores = BaseScoreCalculator(prior_alpha=1.0, prior_beta=1.0).calculate_scores(
+        history, recent_n=50
+    )
+    boosts, _ = booster.calculate_boosts(history)  # HMM boosts are skipped
+    penalties = penalizer.calculate_penalties(history)
+    return ScoreEnsembler(minimum_score=0.0).combine(base_scores, boosts, penalties)
+
+
+class CachedScoreComputer:
+    """Score computer that does the weight-independent work only once.
+
+    Every layer is linear in its weight (`base + sum(w * boost) - sum(l *
+    penalty)`, floored at 0), so the engine is run once per unit weight and
+    each later `compute` call is a small weighted sum. The GA evaluates
+    thousands of weight vectors against the same histories, and rebuilding the
+    Markov matrix for each one made a full run take days.
+    """
+
+    def __init__(self, history: pd.DataFrame) -> None:
+        self.history = history
+        self._components: tuple[np.ndarray, dict[str, np.ndarray]] | None = None
+        self._lock = threading.Lock()  # the GA evaluates from several threads
+
+    def _build_components(self) -> tuple[np.ndarray, dict[str, np.ndarray]]:
+        def as_vector(by_number: dict[int, float]) -> np.ndarray:
+            return np.array([by_number[number] for number in _NUMBERS], dtype=float)
+
+        history = self.history
+        base = as_vector(
+            BaseScoreCalculator(prior_alpha=1.0, prior_beta=1.0).calculate_scores(
+                history, recent_n=50
+            )
+        )
+        # Signed unit responses: boosts add, penalties subtract.
+        units: dict[str, np.ndarray] = {}
+        for key in BOOST_WEIGHT_KEYS:
+            unit_weights = {name: float(name == key) for name in BOOST_WEIGHT_KEYS}
+            boosts, _ = BoostCalculator(
+                hot_threshold=2, hot_window=5, cold_window=10, **unit_weights
+            ).calculate_boosts(history)
+            units[key] = as_vector(boosts)
+
+        penalizer = PenaltyCalculator(
+            poisson_window=20, poisson_lambda=_UNIT_LAMBDA, markov_lambda=_UNIT_LAMBDA
+        )
+        units["poisson_lambda"] = -as_vector(penalizer.calculate_poisson_penalty(history)) / _UNIT_LAMBDA
+        units["markov_lambda"] = -as_vector(penalizer.calculate_markov_penalty(history)) / _UNIT_LAMBDA
+        return base, units
+
+    def compute(self, weights: dict[str, float]) -> dict[int, float]:
+        """Compute raw scores for the given weights."""
+        with self._lock:
+            if self._components is None:
+                self._components = self._build_components()
+        base, units = self._components
+
+        raw = base.copy()
+        for key, unit in units.items():
+            raw += weights[key] * unit
+        np.maximum(raw, 0.0, out=raw)
+        return dict(zip(_NUMBERS, raw.tolist()))
 
 
 def _hit_at_k(
@@ -169,8 +224,9 @@ class FitnessEvaluator:
         self.train_end = train_end
         self.val_end = val_end
         
-        # Cache for CachedScoreComputer instances (keyed by history hash)
-        self._score_computer_cache: dict[int, CachedScoreComputer] = {}
+        # Per target round: score computer over the prior rounds + actual numbers
+        self._round_cache: dict[int, tuple[CachedScoreComputer, set[int]] | None] = {}
+        self._round_cache_lock = threading.Lock()
 
     def evaluate(self, weights: dict[str, float]) -> FitnessResult:
         """Evaluate a weight vector.
@@ -200,13 +256,10 @@ class FitnessEvaluator:
 
         # Evaluate on train (sample for speed)
         train_sample = train_rounds[-20:]  # last 20 of training (reduced from 100 for speed)
-        train_hits_15 = self._evaluate_rounds(history, train_sample, weights, k=15)
-        train_hits_20 = self._evaluate_rounds(history, train_sample, weights, k=20)
+        train_hits_15, _, _ = self._evaluate_window(train_sample, weights)
 
         # Evaluate on validation
-        val_hits_15 = self._evaluate_rounds(history, val_rounds, weights, k=15)
-        val_hits_20 = self._evaluate_rounds(history, val_rounds, weights, k=20)
-        val_ranks = self._evaluate_ranks(history, val_rounds, weights)
+        val_hits_15, val_hits_20, val_ranks = self._evaluate_window(val_rounds, weights)
 
         train_fitness = float(np.mean(train_hits_15))
         val_fitness = float(np.mean(val_hits_15))
@@ -226,66 +279,51 @@ class FitnessEvaluator:
             combined_fitness=combined,
         )
 
-    def _evaluate_rounds(
-        self,
-        history: pd.DataFrame,
-        target_rounds: list[int],
-        weights: dict[str, float],
-        k: int,
-    ) -> list[int]:
-        """Compute hit@K for each target round using prior data."""
-        hits: list[int] = []
-        for target_round in target_rounds:
-            train_data = history[history["round"] < target_round]
-            if len(train_data) < 20:
-                continue
-            actual_row = history[history["round"] == target_round]
-            if actual_row.empty:
-                continue
-            actual_numbers = set(
-                int(actual_row.iloc[0][col]) for col in NUMBER_COLUMNS
-            )
-            try:
-                # Use cached score computer for this training data
-                data_hash = hash(tuple(train_data["round"].values))
-                if data_hash not in self._score_computer_cache:
-                    self._score_computer_cache[data_hash] = CachedScoreComputer(train_data)
-                
-                scores = self._score_computer_cache[data_hash].compute(weights)
-                hits.append(_hit_at_k(scores, actual_numbers, k))
-            except Exception:
-                hits.append(0)
-        return hits if hits else [0]
+    def _round_context(self, target_round: int) -> tuple[CachedScoreComputer, set[int]] | None:
+        """Score computer over the rounds before `target_round`, plus its actual numbers."""
+        with self._round_cache_lock:
+            return self._round_context_locked(target_round)
 
-    def _evaluate_ranks(
+    def _round_context_locked(self, target_round: int) -> tuple[CachedScoreComputer, set[int]] | None:
+        if target_round not in self._round_cache:
+            history = self.history
+            train_data = history[history["round"] < target_round]
+            actual_row = history[history["round"] == target_round]
+            if len(train_data) < 20 or actual_row.empty:
+                self._round_cache[target_round] = None
+            else:
+                actual_numbers = set(int(actual_row.iloc[0][col]) for col in NUMBER_COLUMNS)
+                self._round_cache[target_round] = (CachedScoreComputer(train_data), actual_numbers)
+        return self._round_cache[target_round]
+
+    def _evaluate_window(
         self,
-        history: pd.DataFrame,
         target_rounds: list[int],
         weights: dict[str, float],
-    ) -> list[float]:
-        """Compute mean rank for each target round."""
+    ) -> tuple[list[int], list[int], list[float]]:
+        """Compute hit@15, hit@20 and mean rank for each target round using prior data."""
+        hits_15: list[int] = []
+        hits_20: list[int] = []
         ranks: list[float] = []
         for target_round in target_rounds:
-            train_data = history[history["round"] < target_round]
-            if len(train_data) < 20:
+            context = self._round_context(target_round)
+            if context is None:
                 continue
-            actual_row = history[history["round"] == target_round]
-            if actual_row.empty:
-                continue
-            actual_numbers = set(
-                int(actual_row.iloc[0][col]) for col in NUMBER_COLUMNS
-            )
+            computer, actual_numbers = context
             try:
-                # Use cached score computer for this training data
-                data_hash = hash(tuple(train_data["round"].values))
-                if data_hash not in self._score_computer_cache:
-                    self._score_computer_cache[data_hash] = CachedScoreComputer(train_data)
-                
-                scores = self._score_computer_cache[data_hash].compute(weights)
+                scores = computer.compute(weights)
+                hits_15.append(_hit_at_k(scores, actual_numbers, 15))
+                hits_20.append(_hit_at_k(scores, actual_numbers, 20))
                 ranks.append(_mean_rank(scores, actual_numbers))
             except Exception:
+                hits_15.append(0)
+                hits_20.append(0)
                 ranks.append(float(TOTAL_NUMBERS / 2))
-        return ranks if ranks else [float(TOTAL_NUMBERS / 2)]
+        return (
+            hits_15 if hits_15 else [0],
+            hits_20 if hits_20 else [0],
+            ranks if ranks else [float(TOTAL_NUMBERS / 2)],
+        )
 
     @staticmethod
     def _validate_weights(weights: dict[str, float]) -> None:

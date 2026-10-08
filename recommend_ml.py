@@ -26,7 +26,7 @@ from lottogogo.engine.filters import (
     HistoryFilter,
 )
 from lottogogo.engine.ranker.scorer import CombinationRanker
-from lottogogo.engine.ranker.diversity import DiversitySelector
+from lottogogo.engine.ranker.diversity import default_number_frequency, select_with_relaxation
 
 NUMBER_COLS = ["n1", "n2", "n3", "n4", "n5", "n6"]
 
@@ -320,18 +320,17 @@ def main(csv_path: str = "history.csv", num_games: int = 5, seed: int | None = N
     ranked = ranker_obj.rank(filtered, probs)
     candidates = [r.numbers for r in ranked]
 
-    base_overlap = 3
-    selector = DiversitySelector(max_overlap=base_overlap)
-    final = selector.select(candidates, output_count=num_games)
-
-    # 다양성 조건 완화
+    # recommend.py와 동일: 번호별 등장 횟수를 제한해 최고점 번호의 독식을 막는다.
+    freq_cap = default_number_frequency(num_games)
+    final = select_with_relaxation(
+        candidates,
+        output_count=num_games,
+        max_overlap=3,
+        max_number_frequency=freq_cap,
+    )
+    print(f"   번호별 최대 등장: {freq_cap}/{num_games}게임")
     if len(final) < num_games:
-        print(f"   ⚠️ 다양성 조건(max_overlap={base_overlap})으로 {len(final)}/{num_games}개만 선택됨. 조건을 완화합니다.")
-        for overlap in range(base_overlap + 1, 7):
-            final = DiversitySelector(max_overlap=overlap).select(candidates, output_count=num_games)
-            if len(final) >= num_games:
-                print(f"   -> max_overlap={overlap}로 {len(final)}/{num_games}개 선택")
-                break
+        print(f"   ⚠️ 조건을 모두 완화했으나 {len(final)}/{num_games}개만 선택됨 (후보 부족)")
 
     # 결과 출력
     print("\n" + "=" * 60)

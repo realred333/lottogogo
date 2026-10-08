@@ -196,8 +196,18 @@ class GAOptimizer:
         pop: list[Any] = []
         gen_log: list[dict[str, Any]] = []
 
+        cp = None
         if checkpoint_path and checkpoint_path.exists():
             cp = self._load_checkpoint(checkpoint_path)
+            # A checkpoint is only a resume aid for the *same* run. One left
+            # over from another window, population size or weight set would
+            # silently replace the fresh search, so it is discarded instead.
+            if cp.get("signature") != self._checkpoint_signature():
+                if verbose:
+                    print("[GA] Ignoring checkpoint from a different run configuration")
+                cp = None
+
+        if cp is not None:
             start_gen = cp["generation"] + 1
             gen_log = cp.get("generation_log", [])
             pop = [creator.Individual(genes) for genes in cp["population"]]
@@ -323,11 +333,23 @@ class GAOptimizer:
             generation_log=gen_log,
         )
 
+    def _checkpoint_signature(self) -> dict[str, Any]:
+        """Identify the run a checkpoint belongs to."""
+        return {
+            "weight_keys": self.weight_keys,
+            "population_size": self.config.population_size,
+            "generations": self.config.generations,
+            "seed": self.config.seed,
+            "train_end": self.evaluator.train_end,
+            "val_end": self.evaluator.val_end,
+        }
+
     def _save_checkpoint(
         self, path: Path, generation: int, pop: list, gen_log: list
     ) -> None:
         """Save GA state to a JSON checkpoint file."""
         data = {
+            "signature": self._checkpoint_signature(),
             "generation": generation,
             "population": [list(ind) for ind in pop],
             "generation_log": gen_log,
@@ -425,8 +447,24 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description="GA Weight Optimizer for LottoGoGo")
     parser.add_argument("--csv", default="history.csv", help="Path to history CSV")
-    parser.add_argument("--train-end", type=int, default=900, help="Last train round")
-    parser.add_argument("--val-end", type=int, default=1100, help="Last validation round")
+    parser.add_argument(
+        "--train-end",
+        type=int,
+        default=None,
+        help="Last train round (default: val-end minus --val-window)",
+    )
+    parser.add_argument(
+        "--val-end",
+        type=int,
+        default=None,
+        help="Last validation round (default: latest round in the CSV)",
+    )
+    parser.add_argument(
+        "--val-window",
+        type=int,
+        default=200,
+        help="Validation rounds used when --train-end is omitted",
+    )
     parser.add_argument("--population", type=int, default=100, help="Population size")
     parser.add_argument("--generations", type=int, default=200, help="Number of generations")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
@@ -440,7 +478,13 @@ def main() -> None:
     args = parser.parse_args()
 
     history = pd.read_csv(args.csv)
-    evaluator = FitnessEvaluator(history, args.train_end, args.val_end)
+    # The window follows the newest draw unless pinned explicitly. With fixed
+    # round numbers the weekly run kept re-optimizing the same old slice and
+    # never saw a newly added round.
+    val_end = args.val_end if args.val_end is not None else int(history["round"].max())
+    train_end = args.train_end if args.train_end is not None else val_end - args.val_window
+    print(f"[GA] Evaluation window: train <= {train_end}, validation {train_end + 1}..{val_end}")
+    evaluator = FitnessEvaluator(history, train_end, val_end)
     config = GAConfig(
         population_size=args.population,
         generations=args.generations,

@@ -6,6 +6,12 @@ from collections.abc import Mapping
 
 import numpy as np
 
+# Sampling temperature is NOT a tunable weight. It never enters the GA fitness
+# function (which ranks raw scores directly), so GA cannot optimize it — it only
+# drifts. See lottogogo.tuning.fitness for details. Callers that read weights
+# from optimized_weights.json must use this constant, not weights["temperature"].
+DEFAULT_TEMPERATURE = 0.5
+
 
 class ProbabilityNormalizer:
     """Convert raw scores to stable sampling probabilities."""

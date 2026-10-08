@@ -59,3 +59,6 @@ web_temp/
 
 # uv
 # uv.lock - keep this for reproducibility
+
+# GA resume state (local only; a stale one must never reach CI)
+data/ga_checkpoint.json
