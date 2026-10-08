@@ -531,7 +531,6 @@ combined      = 0.4 × train_fitness + 0.5 × val_fitness + 0.1 × rank_bonus
 ```bash
 uv run python -m lottogogo.tuning.ga_optimizer \
   --csv history.csv \
-  --train-end 900 --val-end 1100 \
   --population 100 --generations 200 \
   --jobs 4 \
   --output data/optimized_weights.json \
@@ -541,13 +540,14 @@ uv run python -m lottogogo.tuning.ga_optimizer \
 | 옵션 | 기본값 | 설명 |
 |---|---|---|
 | `--csv` | `history.csv` | 과거 추첨 데이터 |
-| `--train-end` | `900` | 학습 마지막 회차 |
-| `--val-end` | `1100` | 검증 마지막 회차 |
+| `--val-end` | 최신 회차 | 검증 마지막 회차. 생략하면 CSV의 최신 회차를 따라갑니다 |
+| `--train-end` | `val-end − val-window` | 학습 마지막 회차 |
+| `--val-window` | `200` | `--train-end` 생략 시 검증에 쓰는 회차 수 |
 | `--population` | `100` | GA 개체 수 (CLI 기본값. `GAConfig` 자체 기본은 50) |
 | `--generations` | `200` | 세대 수 |
 | `--jobs` | `1` | 병렬 평가 스레드 수 |
 | `--seed` | `42` | 랜덤 시드 |
-| `--checkpoint` | `data/ga_checkpoint.json` | 25세대마다 저장 |
+| `--checkpoint` | `data/ga_checkpoint.json` | 25세대마다 저장. 구간·개체 수·시드가 다른 실행의 체크포인트는 무시합니다 |
 | `--output` | `data/optimized_weights.json` | 결과 JSON |
 | `--plot` | `data/fitness_history.png` | 수렴 그래프 |
 | `--cycle-label` | `ga-weight-optimization-20260215` | 결과에 기록될 실행 라벨 |

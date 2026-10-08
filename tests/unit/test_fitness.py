@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -169,3 +170,19 @@ def test_temperature_is_not_a_tunable_weight():
 def test_weight_bounds_are_valid():
     for key, (lo, hi) in WEIGHT_BOUNDS.items():
         assert lo < hi, f"{key}: lo={lo} >= hi={hi}"
+
+
+def test_cached_scores_match_reference_pipeline():
+    """The precomputed fast path must rank numbers exactly like the engine."""
+    from lottogogo.tuning.fitness import CachedScoreComputer, _compute_scores
+
+    history = _make_history(120)
+    rng = np.random.default_rng(7)
+    computer = CachedScoreComputer(history)
+    for _ in range(20):
+        weights = {key: float(rng.uniform(lo, hi)) for key, (lo, hi) in WEIGHT_BOUNDS_NO_HMM.items()}
+        fast = computer.compute(weights)
+        reference = _compute_scores(history, weights)
+        assert list(fast) == sorted(reference)
+        for number, score in reference.items():
+            assert fast[number] == pytest.approx(score, abs=1e-12)
