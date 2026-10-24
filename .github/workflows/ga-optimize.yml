@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -55,7 +57,12 @@ jobs:
 
           git diff --cached --quiet || git commit -m "chore: update optimized weights [skip ci]"
 
-          git push
+          # main may have moved during the run (e.g. a history-update commit).
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && break
+            [ "$i" = 3 ] && exit 1
+            sleep 5
+          done
 
       - name: Discord 알림 (GA 최적화 완료)
         run: |

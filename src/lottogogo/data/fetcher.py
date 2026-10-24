@@ -271,7 +271,16 @@ class LottoHistoryFetcher:
                 with urlopen(request, timeout=self.timeout, context=self._ssl_context) as response:
                     charset = response.headers.get_content_charset() or "utf-8"
                     raw = response.read().decode(charset, errors="replace")
+                # The endpoint sometimes serves an HTML maintenance/block page
+                # instead of JSON; treat that as transient and retry.
+                payload = json.loads(raw)
                 break
+            except json.JSONDecodeError as exc:
+                last_error = exc
+                if attempt >= self.max_retries:
+                    raise LottoFetchError(f"Invalid JSON response for round {round_id}.") from exc
+                if self.retry_delay > 0:
+                    time.sleep(self.retry_delay * (2**attempt))
             except (HTTPError, URLError, TimeoutError) as exc:
                 last_error = exc
                 if attempt >= self.max_retries:
@@ -281,10 +290,6 @@ class LottoHistoryFetcher:
         else:
             raise LottoFetchError(f"Failed to fetch round {round_id}: {last_error}")
 
-        try:
-            payload = json.loads(raw)
-        except json.JSONDecodeError as exc:
-            raise LottoFetchError(f"Invalid JSON response for round {round_id}.") from exc
         if not isinstance(payload, dict):
             raise LottoFetchError(f"Unexpected response shape for round {round_id}.")
         return payload

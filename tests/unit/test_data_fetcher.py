@@ -195,3 +195,43 @@ def test_update_history_csv_preserves_existing_extra_columns(tmp_path: Path, mon
 
     saved = csv_path.read_text(encoding="utf-8")
     assert "1210,1,7,9,17,27,38,31" in saved
+
+
+class _FakeResponse:
+    def __init__(self, body: str):
+        self._body = body.encode("utf-8")
+        self.headers = self
+
+    def get_content_charset(self):
+        return "utf-8"
+
+    def read(self):
+        return self._body
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+def test_request_json_retries_non_json_response(monkeypatch):
+    import json
+
+    from lottogogo.data import fetcher as fetcher_module
+
+    bodies = iter(["<html>maintenance</html>", json.dumps(_payload(round_id=1205))])
+    monkeypatch.setattr(fetcher_module, "urlopen", lambda *a, **k: _FakeResponse(next(bodies)))
+    fetcher = LottoHistoryFetcher(retry_delay=0)
+
+    assert fetcher.fetch_round(1205).round == 1205
+
+
+def test_request_json_raises_when_non_json_persists(monkeypatch):
+    from lottogogo.data import fetcher as fetcher_module
+
+    monkeypatch.setattr(fetcher_module, "urlopen", lambda *a, **k: _FakeResponse("<html></html>"))
+    fetcher = LottoHistoryFetcher(retry_delay=0)
+
+    with pytest.raises(LottoFetchError, match="Invalid JSON"):
+        fetcher.fetch_round(1205)
