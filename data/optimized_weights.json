@@ -1,22 +1,22 @@
 {
-  "cycle_label": "auto-optimization-bbe9fd6a856bd5836c9e3e0dd0c23188a0f7c1bf",
-  "optimized_at": "2026-11-02T03:07:47+0000",
+  "cycle_label": "auto-optimization-4b1dc93ef1f097393461e40658dfcc8c9161bca6",
+  "optimized_at": "2026-11-09T03:27:29+0000",
   "weights": {
-    "hot_weight": 0.1326017449263555,
+    "hot_weight": 0.14832776396904584,
     "cold_weight": 0.0,
-    "neighbor_weight": 0.0007706320409121038,
-    "carryover_weight": 0.00014338778506942622,
-    "reverse_weight": 0.3792339096947187,
-    "poisson_lambda": 0.23108545348767684,
-    "markov_lambda": 0.3825264228641503
+    "neighbor_weight": 0.0,
+    "carryover_weight": 0.0001233542483840988,
+    "reverse_weight": 0.36678647233064365,
+    "poisson_lambda": 0.23101899549189384,
+    "markov_lambda": 0.3681812997297548
   },
   "fitness": {
-    "hit_at_15": 2.115,
-    "hit_at_20": 2.715,
-    "mean_rank": 22.70833333333333,
+    "hit_at_15": 2.09,
+    "hit_at_20": 2.74,
+    "mean_rank": 22.7525,
     "train_fitness": 2.6,
-    "val_fitness": 2.115,
-    "combined_fitness": 2.147037037037037
+    "val_fitness": 2.09,
+    "combined_fitness": 2.134438888888889
   },
   "baseline": {
     "hit_at_15": 2.0,
