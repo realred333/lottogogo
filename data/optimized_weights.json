@@ -1,22 +1,22 @@
 {
-  "cycle_label": "auto-optimization-4b1dc93ef1f097393461e40658dfcc8c9161bca6",
-  "optimized_at": "2026-11-09T03:27:29+0000",
+  "cycle_label": "auto-optimization-4c828048000c8511077e4426c9eb07dc1dfe0634",
+  "optimized_at": "2026-11-16T03:35:57+0000",
   "weights": {
-    "hot_weight": 0.14832776396904584,
-    "cold_weight": 0.0,
-    "neighbor_weight": 0.0,
-    "carryover_weight": 0.0001233542483840988,
-    "reverse_weight": 0.36678647233064365,
-    "poisson_lambda": 0.23101899549189384,
-    "markov_lambda": 0.3681812997297548
+    "hot_weight": 0.0,
+    "cold_weight": 0.06635321604720729,
+    "neighbor_weight": 0.44258206392822036,
+    "carryover_weight": 0.0007507833522898325,
+    "reverse_weight": 0.5,
+    "poisson_lambda": 0.1620137005032401,
+    "markov_lambda": 0.0
   },
   "fitness": {
-    "hit_at_15": 2.09,
-    "hit_at_20": 2.74,
-    "mean_rank": 22.7525,
-    "train_fitness": 2.6,
-    "val_fitness": 2.09,
-    "combined_fitness": 2.134438888888889
+    "hit_at_15": 1.935,
+    "hit_at_20": 2.575,
+    "mean_rank": 23.13,
+    "train_fitness": 2.7,
+    "val_fitness": 1.935,
+    "combined_fitness": 2.0961000000000003
   },
   "baseline": {
     "hit_at_15": 2.0,
